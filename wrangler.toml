@@ -1,0 +1,37 @@
+name = "qiita-x-bot"
+main = "src/index.ts"
+compatibility_date = "2025-01-07"
+
+# Cron Triggers
+# 月・木 9:00 に記事投稿
+# 毎日 2:00 にメトリクス更新
+[triggers]
+crons = [
+  "0 9 * * 1,4",  # 記事投稿: 月曜・木曜 9:00 (JST)
+  "0 2 * * *"     # メトリクス更新: 毎日 2:00 (JST)
+]
+
+# Workers AI binding
+[ai]
+binding = "AI"
+
+# KV namespace for caching
+[[kv_namespaces]]
+binding = "KV"
+id = "your_kv_namespace_id"  # wrangler kv:namespace create KV で作成
+
+# D1 database for metrics
+[[d1_databases]]
+binding = "DB"
+database_name = "qiita-bot-db"
+database_id = "your_d1_database_id"  # wrangler d1 create qiita-bot-db で作成
+
+# Vectorize for article embeddings
+[[vectorize]]
+binding = "VECTORIZE"
+index_name = "article-embeddings"
+
+# Environment variables (non-secret)
+[vars]
+ORG_MEMBERS = "member1,member2,member3"  # 組織メンバーのQiita ID（カンマ区切り）
+DEFAULT_SCORE_THRESHOLD = "25"  # メタスコアの閾値

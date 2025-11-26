@@ -1,0 +1,15 @@
+# Qiita API
+QIITA_TOKEN=your_qiita_access_token_here
+
+# Anthropic Claude API
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+
+# X (Twitter) API
+TWITTER_API_KEY=your_x_api_key
+TWITTER_API_SECRET=your_x_api_secret
+TWITTER_ACCESS_TOKEN=your_x_access_token
+TWITTER_ACCESS_SECRET=your_x_access_secret
+TWITTER_BEARER_TOKEN=your_x_bearer_token
+
+# Slack (optional)
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
