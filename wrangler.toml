@@ -43,8 +43,16 @@ ADVENT_CALENDAR_THRESHOLD = "10"  # アドベントカレンダー期間のメ�
 EVENING_POST_THRESHOLD = "15"  # 夕方投稿のメタスコア閾値
 
 [observability]
-[observability.logs]
 enabled = false
 head_sampling_rate = 1
-invocation_logs = true
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
 persist = true
+invocation_logs = true
+
+[observability.traces]
+enabled = false
+persist = true
+head_sampling_rate = 1
