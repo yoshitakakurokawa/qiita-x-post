@@ -38,101 +38,42 @@ APIs:
   - X API v2 (投稿)
 ```
 
-## セットアップ
-
-### 0. Bunのインストール（未インストールの場合）
+## クイックスタート
 
 ```bash
-curl -fsSL https://bun.sh/install | bash
-```
-
-### 1. 依存パッケージのインストール
-
-```bash
+# 1. 依存パッケージのインストール
 bun install
+
+# 2. ローカル開発サーバー起動
+bun run dev
+
+# 3. テスト実行
+bun test
 ```
-
-### 2. Cloudflareリソースの作成
-
-```bash
-# KV Namespace
-wrangler kv:namespace create KV
-
-# D1 Database
-wrangler d1 create qiita-bot-db
-
-# データベーススキーマの適用
-wrangler d1 execute qiita-bot-db --file=./schema.sql
-
-# Vectorize Index (オプション)
-wrangler vectorize create article-embeddings --dimensions=768 --metric=cosine
-```
-
-### 3. wrangler.tomlの設定
-
-`wrangler.toml`を編集して、作成したリソースのIDを設定:
-
-```toml
-[[kv_namespaces]]
-binding = "KV"
-id = "your_kv_namespace_id"  # 手順2で取得したID
-
-[[d1_databases]]
-binding = "DB"
-database_id = "your_d1_database_id"  # 手順2で取得したID
-
-[vars]
-ORG_MEMBERS = "your_qiita_id_1,your_qiita_id_2"  # Qiita IDをカンマ区切りで指定
-```
-
-### 4. Secretsの設定
-
-```bash
-# Qiita API Token
-wrangler secret put QIITA_TOKEN
-
-# Anthropic API Key
-wrangler secret put ANTHROPIC_API_KEY
-
-# X (Twitter) API Credentials
-wrangler secret put TWITTER_API_KEY
-wrangler secret put TWITTER_API_SECRET
-wrangler secret put TWITTER_ACCESS_TOKEN
-wrangler secret put TWITTER_ACCESS_SECRET
-wrangler secret put TWITTER_BEARER_TOKEN
-
-# Slack Webhook (オプション)
-wrangler secret put SLACK_WEBHOOK_URL
-```
-
-### 5. APIキーの取得方法
-
-#### Qiita API Token
-1. https://qiita.com/settings/tokens にアクセス
-2. 「新しくトークンを発行する」をクリック
-3. スコープ: `read_qiita` を選択
-
-#### Anthropic API Key
-1. https://console.anthropic.com/ にアクセス
-2. API Keysから新しいキーを作成
-
-#### X (Twitter) API
-1. https://developer.twitter.com/ にアクセス
-2. Appを作成し、OAuth 1.0a認証情報を取得
-3. Read and Write権限を付与
-
-#### Slack Webhook (オプション)
-1. https://api.slack.com/apps にアクセス
-2. Incoming Webhooksを有効化
 
 ## デプロイ
 
-```bash
-# 本番デプロイ
-wrangler deploy
+詳細なデプロイ手順は **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** を参照してください。
 
-# ログ確認
-wrangler tail
+### 簡易手順
+
+```bash
+# 1. Cloudflareリソースの作成
+npx wrangler kv:namespace create KV
+npx wrangler d1 create qiita-bot-db
+npx wrangler d1 execute qiita-bot-db --file=./schema.sql
+npx wrangler vectorize create article-embeddings --dimensions=1024 --metric=cosine
+
+# 2. wrangler.toml を編集（リソースIDを設定）
+
+# 3. Secretsの設定
+npx wrangler secret put QIITA_TOKEN
+npx wrangler secret put ANTHROPIC_API_KEY
+npx wrangler secret put TWITTER_API_KEY
+# ... (その他のSecrets)
+
+# 4. デプロイ
+npx wrangler deploy
 ```
 
 ## 開発

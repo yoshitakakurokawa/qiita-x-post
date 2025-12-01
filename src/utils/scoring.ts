@@ -1,4 +1,4 @@
-import { QiitaArticle } from '../types/qiita';
+import type { QiitaArticle } from '../types/qiita';
 
 /**
  * 記事のメタスコアを計算（AI評価前のフィルタリング用）
@@ -29,12 +29,24 @@ export function calculateMetaScore(article: QiitaArticle): number {
 
   // タグの質 (最大5点)
   const premiumTags = [
-    'TypeScript', 'React', 'AWS', 'Python', 'Next.js',
-    'Claude', 'AI', 'OpenAI', 'LLM', '機械学習',
-    'Docker', 'Kubernetes', 'Go', 'Rust', 'Vue.js'
+    'TypeScript',
+    'React',
+    'AWS',
+    'Python',
+    'Next.js',
+    'Claude',
+    'AI',
+    'OpenAI',
+    'LLM',
+    '機械学習',
+    'Docker',
+    'Kubernetes',
+    'Go',
+    'Rust',
+    'Vue.js',
   ];
-  const matchingTags = article.tags.filter(t =>
-    premiumTags.some(pt => pt.toLowerCase() === t.name.toLowerCase())
+  const matchingTags = article.tags.filter((t) =>
+    premiumTags.some((pt) => pt.toLowerCase() === t.name.toLowerCase())
   ).length;
   score += Math.min(5, matchingTags * 2);
 
@@ -78,11 +90,11 @@ export function filterByMetaScore(
   threshold: number = 25
 ): Array<QiitaArticle & { metaScore: number }> {
   return articles
-    .map(article => ({
+    .map((article) => ({
       ...article,
-      metaScore: calculateMetaScore(article)
+      metaScore: calculateMetaScore(article),
     }))
-    .filter(article => article.metaScore >= threshold)
+    .filter((article) => article.metaScore >= threshold)
     .sort((a, b) => b.metaScore - a.metaScore);
 }
 

@@ -1,15 +1,20 @@
-import { describe, it, expect } from 'vitest';
-import { compressCodeBlocks, compressForEvaluation, optimizeForSummarization, getByteSize } from './tokens';
+import { describe, expect, it } from 'vitest';
+import {
+  compressCodeBlocks,
+  compressForEvaluation,
+  getByteSize,
+  optimizeForSummarization,
+} from './tokens';
 
 describe('tokens', () => {
   describe('compressCodeBlocks', () => {
     it('should not compress short code blocks', () => {
-      const code = '```js\n' + 'line\n'.repeat(10) + '```';
+      const code = `\`\`\`js\n${'line\n'.repeat(10)}\`\`\``;
       expect(compressCodeBlocks(code)).toBe(code);
     });
 
     it('should compress long code blocks', () => {
-      const code = '```js\n' + 'line\n'.repeat(20) + '```';
+      const code = `\`\`\`js\n${'line\n'.repeat(20)}\`\`\``;
       const compressed = compressCodeBlocks(code);
       expect(compressed).toContain('// ... (7行省略)');
       expect(compressed.split('\n').length).toBeLessThan(20);
@@ -22,7 +27,7 @@ describe('tokens', () => {
         id: '1',
         title: 'Title',
         body: 'Content '.repeat(50),
-        tags: [{ name: 'Tag' }]
+        tags: [{ name: 'Tag' }],
       };
       const compressed = compressForEvaluation(article);
       expect(compressed).toContain('[1] Title');
@@ -35,7 +40,7 @@ describe('tokens', () => {
     it('should optimize article for summarization', () => {
       const article = {
         title: 'Title',
-        body: '# Heading\n' + 'Content '.repeat(100) + '\n```js\ncode\n```'
+        body: `# Heading\n${'Content '.repeat(100)}\n\`\`\`js\ncode\n\`\`\``,
       };
       const optimized = optimizeForSummarization(article);
       expect(optimized).toContain('# Heading');

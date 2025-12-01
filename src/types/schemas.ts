@@ -1,54 +1,54 @@
-import { z } from 'zod';
+import * as v from 'valibot';
 
-export const QiitaUserSchema = z.object({
-  id: z.string(),
-  name: z.string().optional(),
-  profile_image_url: z.string(),
-  items_count: z.number(),
-  followers_count: z.number()
+export const QiitaUserSchema = v.object({
+  id: v.string(),
+  name: v.optional(v.string()),
+  profile_image_url: v.string(),
+  items_count: v.number(),
+  followers_count: v.number(),
 });
 
-export const QiitaTagSchema = z.object({
-  name: z.string(),
-  versions: z.array(z.string()).optional()
+export const QiitaTagSchema = v.object({
+  name: v.string(),
+  versions: v.optional(v.array(v.string())),
 });
 
-export const QiitaArticleSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  url: z.string(),
-  body: z.string(),
-  likes_count: z.number(),
-  stocks_count: z.number(),
-  comments_count: z.number(),
-  created_at: z.string(),
-  updated_at: z.string(),
-  tags: z.array(QiitaTagSchema),
-  user: QiitaUserSchema
+export const QiitaArticleSchema = v.object({
+  id: v.string(),
+  title: v.string(),
+  url: v.string(),
+  body: v.string(),
+  likes_count: v.number(),
+  stocks_count: v.number(),
+  comments_count: v.number(),
+  created_at: v.string(),
+  updated_at: v.string(),
+  tags: v.array(QiitaTagSchema),
+  user: QiitaUserSchema,
 });
 
-export const ArticleEvaluationSchema = z.object({
-  article_id: z.string(),
-  total_score: z.number(),
-  recommended: z.boolean(),
-  reasoning: z.string()
+export const ArticleEvaluationSchema = v.object({
+  article_id: v.string(),
+  total_score: v.number(),
+  recommended: v.boolean(),
+  reasoning: v.string(),
 });
 
-export const BatchEvaluationResultSchema = z.object({
-  evaluations: z.array(ArticleEvaluationSchema),
-  total_tokens: z.number(),
-  model_used: z.string()
+export const BatchEvaluationResultSchema = v.object({
+  evaluations: v.array(ArticleEvaluationSchema),
+  total_tokens: v.number(),
+  model_used: v.string(),
 });
 
-export const TweetContentSchema = z.object({
-  text: z.string(),
-  hashtags: z.array(z.string()),
-  estimated_engagement: z.number()
+export const TweetContentSchema = v.object({
+  text: v.string(),
+  hashtags: v.array(v.string()),
+  estimated_engagement: v.number(),
 });
 
-export type QiitaUser = z.infer<typeof QiitaUserSchema>;
-export type QiitaTag = z.infer<typeof QiitaTagSchema>;
-export type QiitaArticle = z.infer<typeof QiitaArticleSchema>;
-export type ArticleEvaluation = z.infer<typeof ArticleEvaluationSchema>;
-export type BatchEvaluationResult = z.infer<typeof BatchEvaluationResultSchema>;
-export type TweetContent = z.infer<typeof TweetContentSchema>;
+export type QiitaUser = v.InferOutput<typeof QiitaUserSchema>;
+export type QiitaTag = v.InferOutput<typeof QiitaTagSchema>;
+export type QiitaArticle = v.InferOutput<typeof QiitaArticleSchema>;
+export type ArticleEvaluation = v.InferOutput<typeof ArticleEvaluationSchema>;
+export type BatchEvaluationResult = v.InferOutput<typeof BatchEvaluationResultSchema>;
+export type TweetContent = v.InferOutput<typeof TweetContentSchema>;

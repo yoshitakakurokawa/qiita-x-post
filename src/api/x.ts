@@ -35,7 +35,7 @@ export class XAPIClient {
   ): Promise<string> {
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const nonce = Array.from(crypto.getRandomValues(new Uint8Array(32)))
-      .map(b => b.toString(16).padStart(2, '0'))
+      .map((b) => b.toString(16).padStart(2, '0'))
       .join('');
 
     const oauthParams: Record<string, string> = {
@@ -45,12 +45,12 @@ export class XAPIClient {
       oauth_timestamp: timestamp,
       oauth_nonce: nonce,
       oauth_version: '1.0',
-      ...params
+      ...params,
     };
 
     const sortedParams = Object.keys(oauthParams)
       .sort()
-      .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(oauthParams[key])}`)
+      .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(oauthParams[key])}`)
       .join('&');
 
     const signatureBase = `${method}&${encodeURIComponent(url)}&${encodeURIComponent(sortedParams)}`;
@@ -77,10 +77,14 @@ export class XAPIClient {
   /**
    * OAuth 1.0aヘッダーを生成
    */
-  private async generateOAuthHeader(method: string, url: string, params: Record<string, string> = {}): Promise<string> {
+  private async generateOAuthHeader(
+    method: string,
+    url: string,
+    params: Record<string, string> = {}
+  ): Promise<string> {
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const nonce = Array.from(crypto.getRandomValues(new Uint8Array(32)))
-      .map(b => b.toString(16).padStart(2, '0'))
+      .map((b) => b.toString(16).padStart(2, '0'))
       .join('');
 
     const signature = await this.generateOAuthSignature(method, url, params);
@@ -92,7 +96,7 @@ export class XAPIClient {
       oauth_timestamp: timestamp,
       oauth_nonce: nonce,
       oauth_version: '1.0',
-      oauth_signature: signature
+      oauth_signature: signature,
     };
 
     const headerValue = Object.entries(oauthParams)
@@ -114,10 +118,10 @@ export class XAPIClient {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Authorization': authHeader,
-        'Content-Type': 'application/json'
+        Authorization: authHeader,
+        'Content-Type': 'application/json',
       },
-      body
+      body,
     });
 
     if (!response.ok) {
@@ -138,33 +142,41 @@ export class XAPIClient {
 
     const response = await fetch(url, {
       headers: {
-        'Authorization': authHeader
-      }
+        Authorization: authHeader,
+      },
     });
 
     if (!response.ok) {
       throw new Error(`X API error: ${response.status} ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as {
+      data: Array<{
+        id: string;
+        public_metrics: {
+          impression_count?: number;
+          like_count?: number;
+          retweet_count?: number;
+          reply_count?: number;
+          quote_count?: number;
+        };
+      }>;
+    };
 
-    return data.data.map((tweet: any) => ({
-      tweet_id: tweet.id,
-      impressions: tweet.public_metrics.impression_count || 0,
-      engagements:
-        (tweet.public_metrics.like_count || 0) +
-        (tweet.public_metrics.retweet_count || 0) +
-        (tweet.public_metrics.reply_count || 0) +
-        (tweet.public_metrics.quote_count || 0),
-      engagement_rate:
-        tweet.public_metrics.impression_count > 0
-          ? ((tweet.public_metrics.like_count +
-              tweet.public_metrics.retweet_count +
-              tweet.public_metrics.reply_count +
-              tweet.public_metrics.quote_count) /
-              tweet.public_metrics.impression_count) *
-            100
-          : 0
-    }));
+    return data.data.map((tweet) => {
+      const impressions = tweet.public_metrics.impression_count || 0;
+      const likes = tweet.public_metrics.like_count || 0;
+      const retweets = tweet.public_metrics.retweet_count || 0;
+      const replies = tweet.public_metrics.reply_count || 0;
+      const quotes = tweet.public_metrics.quote_count || 0;
+      const engagements = likes + retweets + replies + quotes;
+
+      return {
+        tweet_id: tweet.id,
+        impressions,
+        engagements,
+        engagement_rate: impressions > 0 ? (engagements / impressions) * 100 : 0,
+      };
+    });
   }
 }

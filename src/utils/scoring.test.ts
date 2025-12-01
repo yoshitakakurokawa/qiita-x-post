@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { calculateMetaScore, filterByMetaScore, selectAIModel, estimateTokens } from './scoring';
-import { QiitaArticle } from '../types/qiita';
+import { describe, expect, it } from 'vitest';
+import type { QiitaArticle } from '../types/qiita';
+import { calculateMetaScore, estimateTokens, filterByMetaScore, selectAIModel } from './scoring';
 
 describe('scoring', () => {
   const mockArticle: QiitaArticle = {
@@ -13,14 +13,17 @@ describe('scoring', () => {
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     body: '# Heading\n\nContent\n\n```javascript\nconsole.log("test");\n```\n\n```python\nprint("test")\n```',
-    tags: [{ name: 'TypeScript', versions: [] }, { name: 'React', versions: [] }],
+    tags: [
+      { name: 'TypeScript', versions: [] },
+      { name: 'React', versions: [] },
+    ],
     user: {
       id: 'user1',
       name: 'Test User',
       profile_image_url: 'https://example.com/image.png',
       items_count: 10,
-      followers_count: 100
-    }
+      followers_count: 100,
+    },
   };
 
   describe('calculateMetaScore', () => {
@@ -44,7 +47,7 @@ describe('scoring', () => {
         comments_count: 0,
         updated_at: new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString(), // > 1 year old
         tags: [{ name: 'Diary', versions: [] }],
-        body: 'Short content'
+        body: 'Short content',
       };
       const score = calculateMetaScore(lowQualityArticle);
       // Likes: 0
@@ -62,7 +65,15 @@ describe('scoring', () => {
     it('should filter articles below threshold', () => {
       const articles = [
         { ...mockArticle, id: '1' }, // Score 38
-        { ...mockArticle, id: '2', likes_count: 0, stocks_count: 0, updated_at: new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString(), tags: [], body: '' } // Score 1
+        {
+          ...mockArticle,
+          id: '2',
+          likes_count: 0,
+          stocks_count: 0,
+          updated_at: new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString(),
+          tags: [],
+          body: '',
+        }, // Score 1
       ];
       const filtered = filterByMetaScore(articles, 25);
       expect(filtered).toHaveLength(1);

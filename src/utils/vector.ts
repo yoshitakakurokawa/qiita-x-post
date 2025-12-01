@@ -1,6 +1,5 @@
-import { Ai } from '@cloudflare/workers-types';
-import { VectorizeIndex } from '@cloudflare/workers-types';
-import { QiitaArticle } from '../types/qiita';
+import type { Ai, VectorizeIndex } from '@cloudflare/workers-types';
+import type { QiitaArticle } from '../types/qiita';
 
 // Use a multilingual model for better Japanese support
 const EMBEDDING_MODEL = '@cf/baai/bge-m3';
@@ -18,9 +17,9 @@ export class VectorService {
    * Generate embedding for text
    */
   async generateEmbedding(text: string): Promise<number[]> {
-    const response = await this.ai.run(EMBEDDING_MODEL, {
-      text: [text]
-    }) as { data: number[][] };
+    const response = (await this.ai.run(EMBEDDING_MODEL, {
+      text: [text],
+    })) as { data: number[][] };
     return response.data[0];
   }
 
@@ -29,7 +28,7 @@ export class VectorService {
    * Uses title and tags for semantic representation
    */
   async generateArticleEmbedding(article: QiitaArticle): Promise<number[]> {
-    const text = `${article.title} ${article.tags.map(t => t.name).join(' ')}`;
+    const text = `${article.title} ${article.tags.map((t) => t.name).join(' ')}`;
     return this.generateEmbedding(text);
   }
 
@@ -39,10 +38,10 @@ export class VectorService {
   async findSimilarArticles(embedding: number[], threshold: number = 0.8, topK: number = 3) {
     const matches = await this.index.query(embedding, {
       topK,
-      returnMetadata: true
+      returnMetadata: true,
     });
 
-    return matches.matches.filter(match => match.score >= threshold);
+    return matches.matches.filter((match) => match.score >= threshold);
   }
 
   /**
@@ -56,9 +55,9 @@ export class VectorService {
         metadata: {
           title: article.title,
           url: article.url,
-          created_at: article.created_at
-        }
-      }
+          created_at: article.created_at,
+        },
+      },
     ]);
   }
 }

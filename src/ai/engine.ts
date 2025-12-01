@@ -1,10 +1,9 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { z } from 'zod';
-import { QiitaArticle } from '../types/qiita';
-import { ArticleEvaluation, BatchEvaluationResult, TweetContent, MODEL_CONFIGS, PRICING } from '../types/ai';
+import * as v from 'valibot';
+import { type BatchEvaluationResult, MODEL_CONFIGS, PRICING, type TweetContent } from '../types/ai';
+import type { QiitaArticle } from '../types/qiita';
 import { ArticleEvaluationSchema, TweetContentSchema } from '../types/schemas';
 import { compressForEvaluation, optimizeForSummarization } from '../utils/tokens';
-import { estimateTokens } from '../utils/scoring';
 
 export class AIEngine {
   private client: Anthropic;
@@ -23,7 +22,7 @@ export class AIEngine {
     const config = MODEL_CONFIGS[modelType];
 
     // 各記事を300文字程度に圧縮
-    const compressed = articles.map(article => compressForEvaluation(article));
+    const compressed = articles.map((article) => compressForEvaluation(article));
 
     const prompt = `以下の${articles.length}件のQiita記事を評価してください。
 
@@ -55,19 +54,23 @@ ${compressed.map((c, i) => `## 記事${i + 1}\n${c}`).join('\n\n')}
       model: config.model,
       max_tokens: config.max_tokens,
       temperature: config.temperature,
-      messages: [{ role: 'user', content: prompt }]
+      messages: [{ role: 'user', content: prompt }],
     });
 
     // レスポンスからJSONを抽出
-    const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
+    const firstContent = message.content[0];
+    if (!firstContent) {
+      throw new Error('No content in AI response');
+    }
+    const responseText = firstContent.type === 'text' ? firstContent.text : '';
     const jsonMatch = responseText.match(/```json\n([\s\S]+?)\n```/);
 
-    if (!jsonMatch) {
+    if (!jsonMatch || !jsonMatch[1]) {
       throw new Error('Failed to parse AI response');
     }
 
     const rawEvaluations = JSON.parse(jsonMatch[1]);
-    const evaluations = z.array(ArticleEvaluationSchema).parse(rawEvaluations);
+    const evaluations = v.parse(v.array(ArticleEvaluationSchema), rawEvaluations);
 
     // トークン使用量を計算
     const totalTokens = message.usage.input_tokens + message.usage.output_tokens;
@@ -75,7 +78,7 @@ ${compressed.map((c, i) => `## 記事${i + 1}\n${c}`).join('\n\n')}
     return {
       evaluations,
       total_tokens: totalTokens,
-      model_used: config.model
+      model_used: config.model,
     };
   }
 
@@ -121,18 +124,22 @@ ${optimized}
       model: config.model,
       max_tokens: config.max_tokens,
       temperature: config.temperature,
-      messages: [{ role: 'user', content: prompt }]
+      messages: [{ role: 'user', content: prompt }],
     });
 
-    const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
+    const firstContent = message.content[0];
+    if (!firstContent) {
+      throw new Error('No content in AI response');
+    }
+    const responseText = firstContent.type === 'text' ? firstContent.text : '';
     const jsonMatch = responseText.match(/```json\n([\s\S]+?)\n```/);
 
-    if (!jsonMatch) {
+    if (!jsonMatch || !jsonMatch[1]) {
       throw new Error('Failed to parse AI response');
     }
 
     const rawTweetContent = JSON.parse(jsonMatch[1]);
-    const tweetContent = TweetContentSchema.parse(rawTweetContent);
+    const tweetContent = v.parse(TweetContentSchema, rawTweetContent);
 
     return tweetContent;
   }
@@ -198,17 +205,21 @@ ${optimized}
       model: config.model,
       max_tokens: config.max_tokens,
       temperature: config.temperature,
-      messages: [{ role: 'user', content: prompt }]
+      messages: [{ role: 'user', content: prompt }],
     });
 
-    const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
+    const firstContent = message.content[0];
+    if (!firstContent) {
+      throw new Error('No content in AI response');
+    }
+    const responseText = firstContent.type === 'text' ? firstContent.text : '';
     const jsonMatch = responseText.match(/```json\n([\s\S]+?)\n```/);
 
-    if (!jsonMatch) {
+    if (!jsonMatch || !jsonMatch[1]) {
       throw new Error('Failed to parse AI response');
     }
 
     const rawTweetContent = JSON.parse(jsonMatch[1]);
-    return TweetContentSchema.parse(rawTweetContent);
+    return v.parse(TweetContentSchema, rawTweetContent);
   }
 }

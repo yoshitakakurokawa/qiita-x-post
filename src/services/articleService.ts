@@ -1,8 +1,8 @@
-import { Env } from '../types/common';
 import { QiitaAPIClient } from '../api/qiita';
+import type { Env } from '../types/common';
+import type { QiitaArticle } from '../types/qiita';
 import { filterByMetaScore } from '../utils/scoring';
 import { VectorService } from '../utils/vector';
-import { QiitaArticle } from '../types/qiita';
 
 export class ArticleService {
   private env: Env;
@@ -18,17 +18,21 @@ export class ArticleService {
   }
 
   async fetchNewArticles(since: Date): Promise<QiitaArticle[]> {
-    const orgMembers = this.env.ORG_MEMBERS.split(',').map(m => m.trim());
+    const orgMembers = this.env.ORG_MEMBERS.split(',').map((m) => m.trim());
     const allArticles = await this.qiitaClient.getOrgMembersArticles(orgMembers);
     return this.qiitaClient.filterArticlesSince(allArticles, since);
   }
 
-  async filterArticles(articles: QiitaArticle[]): Promise<Array<QiitaArticle & { metaScore: number }>> {
+  async filterArticles(
+    articles: QiitaArticle[]
+  ): Promise<Array<QiitaArticle & { metaScore: number }>> {
     const threshold = parseInt(this.env.DEFAULT_SCORE_THRESHOLD || '25', 10);
     return filterByMetaScore(articles, threshold);
   }
 
-  async getUnpostedArticles(articles: Array<QiitaArticle & { metaScore: number }>): Promise<Array<QiitaArticle & { metaScore: number }>> {
+  async getUnpostedArticles(
+    articles: Array<QiitaArticle & { metaScore: number }>
+  ): Promise<Array<QiitaArticle & { metaScore: number }>> {
     const unpostedArticles = [];
     for (const article of articles) {
       const posted = await this.env.DB.prepare('SELECT id FROM posts WHERE article_id = ?')
@@ -42,7 +46,9 @@ export class ArticleService {
     return unpostedArticles;
   }
 
-  async checkSimilarity(article: QiitaArticle): Promise<{ isSimilar: boolean; similarArticleId?: string; score?: number }> {
+  async checkSimilarity(
+    article: QiitaArticle
+  ): Promise<{ isSimilar: boolean; similarArticleId?: string; score?: number }> {
     if (!this.vectorService) return { isSimilar: false };
 
     try {
@@ -53,12 +59,10 @@ export class ArticleService {
         return {
           isSimilar: true,
           similarArticleId: similarArticles[0].id,
-          score: similarArticles[0].score
+          score: similarArticles[0].score,
         };
       }
-    } catch (e) {
-      console.error('Vectorize check error:', e);
-    }
+    } catch (_e) {}
 
     return { isSimilar: false };
   }

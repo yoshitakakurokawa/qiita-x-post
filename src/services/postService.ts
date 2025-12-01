@@ -1,11 +1,11 @@
-import { Env } from '../types/common';
 import { AIEngine } from '../ai/engine';
-import { XAPIClient } from '../api/x';
 import { SlackClient } from '../api/slack';
-import { VectorService } from '../utils/vector';
-import { QiitaArticle } from '../types/qiita';
+import { XAPIClient } from '../api/x';
+import type { ArticleEvaluation, BatchEvaluationResult } from '../types/ai';
+import type { Env } from '../types/common';
+import type { QiitaArticle } from '../types/qiita';
 import { selectAIModel } from '../utils/scoring';
-import { ArticleEvaluation, BatchEvaluationResult } from '../types/ai';
+import { VectorService } from '../utils/vector';
 
 export class PostService {
   private env: Env;
@@ -27,14 +27,16 @@ export class PostService {
     }
   }
 
-  async evaluateArticles(articles: Array<QiitaArticle & { metaScore: number }>): Promise<{ result: BatchEvaluationResult; cost: number } | null> {
+  async evaluateArticles(
+    articles: Array<QiitaArticle & { metaScore: number }>
+  ): Promise<{ result: BatchEvaluationResult; cost: number } | null> {
     if (articles.length === 0) return null;
 
     const modelType = selectAIModel(articles[0].metaScore);
     if (modelType === 'skip') return null;
 
     const batchResult = await this.aiEngine.evaluateBatch(articles.slice(0, 5), modelType);
-    
+
     const cost = this.aiEngine.calculateCost(
       batchResult.total_tokens * 0.7,
       batchResult.total_tokens * 0.3,
@@ -57,7 +59,7 @@ export class PostService {
     );
 
     // Post to X
-    const hashtags = tweetContent.hashtags.map(tag => `#${tag}`).join(' ');
+    const hashtags = tweetContent.hashtags.map((tag) => `#${tag}`).join(' ');
     const fullTweetText = `${tweetContent.text}\n\n${article.url}\n\n${hashtags}`;
     const tweetResponse = await this.xClient.postTweet(fullTweetText);
 
@@ -88,9 +90,7 @@ export class PostService {
       try {
         const embedding = await this.vectorService.generateArticleEmbedding(article);
         await this.vectorService.insertArticle(article, embedding);
-      } catch (e) {
-        console.error('Failed to save embedding:', e);
-      }
+      } catch (_e) {}
     }
 
     // Notify Slack
@@ -107,7 +107,13 @@ export class PostService {
     return { tweetId: tweetResponse.data.id, cost: 0 }; // Cost calculation for generation omitted for brevity or can be added
   }
 
-  async logTokenUsage(articleId: string, operation: string, model: string, tokens: number, cost: number) {
+  async logTokenUsage(
+    articleId: string,
+    operation: string,
+    model: string,
+    tokens: number,
+    cost: number
+  ) {
     await this.env.DB.prepare(
       `INSERT INTO token_usage (article_id, operation, model, input_tokens, output_tokens, cost_usd, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`

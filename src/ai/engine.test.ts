@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { QiitaArticle } from '../types/qiita';
 import { AIEngine } from './engine';
-import { QiitaArticle } from '../types/qiita';
 
 // Mock Anthropic SDK
 const mockCreate = vi.fn();
@@ -8,9 +8,9 @@ vi.mock('@anthropic-ai/sdk', () => {
   return {
     default: class {
       messages = {
-        create: mockCreate
+        create: mockCreate,
       };
-    }
+    },
   };
 });
 
@@ -32,9 +32,9 @@ describe('AIEngine', () => {
       name: 'User',
       profile_image_url: 'url',
       items_count: 1,
-      followers_count: 1
+      followers_count: 1,
     },
-    metaScore: 30
+    metaScore: 30,
   };
 
   beforeEach(() => {
@@ -45,14 +45,16 @@ describe('AIEngine', () => {
   describe('evaluateBatch', () => {
     it('should evaluate articles and return results', async () => {
       const mockResponse = {
-        content: [{
-          type: 'text',
-          text: '```json\n[{"article_id": "1", "total_score": 40, "recommended": true, "reasoning": "Good"}]\n```'
-        }],
+        content: [
+          {
+            type: 'text',
+            text: '```json\n[{"article_id": "1", "total_score": 40, "recommended": true, "reasoning": "Good"}]\n```',
+          },
+        ],
         usage: {
           input_tokens: 100,
-          output_tokens: 50
-        }
+          output_tokens: 50,
+        },
       };
       mockCreate.mockResolvedValue(mockResponse);
 
@@ -67,21 +69,25 @@ describe('AIEngine', () => {
     it('should throw error if JSON parsing fails', async () => {
       mockCreate.mockResolvedValue({
         content: [{ type: 'text', text: 'Invalid JSON' }],
-        usage: { input_tokens: 10, output_tokens: 10 }
+        usage: { input_tokens: 10, output_tokens: 10 },
       });
 
-      await expect(engine.evaluateBatch([mockArticle])).rejects.toThrow('Failed to parse AI response');
+      await expect(engine.evaluateBatch([mockArticle])).rejects.toThrow(
+        'Failed to parse AI response'
+      );
     });
   });
 
   describe('generateTweetContent', () => {
     it('should generate tweet content', async () => {
       const mockResponse = {
-        content: [{
-          type: 'text',
-          text: '```json\n{"text": "Tweet text", "hashtags": ["tag"], "estimated_engagement": 80}\n```'
-        }],
-        usage: { input_tokens: 100, output_tokens: 50 }
+        content: [
+          {
+            type: 'text',
+            text: '```json\n{"text": "Tweet text", "hashtags": ["tag"], "estimated_engagement": 80}\n```',
+          },
+        ],
+        usage: { input_tokens: 100, output_tokens: 50 },
       };
       mockCreate.mockResolvedValue(mockResponse);
 

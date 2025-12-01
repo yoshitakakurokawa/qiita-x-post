@@ -23,9 +23,9 @@ export class SlackClient {
     const response = await fetch(this.webhookUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(notification)
+      body: JSON.stringify(notification),
     });
 
     if (!response.ok) {
@@ -50,16 +50,16 @@ export class SlackClient {
             {
               title: 'スコア',
               value: score.toString(),
-              short: true
+              short: true,
             },
             {
               title: 'ツイートID',
               value: tweetId,
-              short: true
-            }
-          ]
-        }
-      ]
+              short: true,
+            },
+          ],
+        },
+      ],
     });
   }
 
@@ -69,9 +69,9 @@ export class SlackClient {
       attachments: [
         {
           color: 'danger',
-          text: error
-        }
-      ]
+          text: error,
+        },
+      ],
     });
   }
 }

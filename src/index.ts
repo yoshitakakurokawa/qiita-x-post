@@ -1,10 +1,10 @@
 import { Hono } from 'hono';
-import { Env } from './types/common';
-import { ArticleService } from './services/articleService';
-import { PostService } from './services/postService';
-import { MetricsService } from './services/metricsService';
-import { logExecution } from './utils/logger';
 import { SlackClient } from './api/slack';
+import { ArticleService } from './services/articleService';
+import { MetricsService } from './services/metricsService';
+import { PostService } from './services/postService';
+import type { Env } from './types/common';
+import { logExecution } from './utils/logger';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -23,7 +23,9 @@ app.get('/cron/post-articles', async (c) => {
     // 前回実行時刻を取得
     const lastRunKey = 'last_post_run';
     const lastRunTime = await env.KV.get(lastRunKey);
-    const sinceDate = lastRunTime ? new Date(lastRunTime) : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const sinceDate = lastRunTime
+      ? new Date(lastRunTime)
+      : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
     console.log(`Fetching articles since ${sinceDate.toISOString()}`);
 
@@ -41,7 +43,15 @@ app.get('/cron/post-articles', async (c) => {
     console.log(`${filteredArticles.length} articles passed meta score filter`);
 
     if (filteredArticles.length === 0) {
-      await logExecution(env.DB, 'post', 'success', 'No articles passed meta score filter', newArticles.length, 0, 0);
+      await logExecution(
+        env.DB,
+        'post',
+        'success',
+        'No articles passed meta score filter',
+        newArticles.length,
+        0,
+        0
+      );
       return c.json({ message: 'No articles passed meta score filter' });
     }
 
@@ -50,7 +60,15 @@ app.get('/cron/post-articles', async (c) => {
     console.log(`${unpostedArticles.length} articles not yet posted`);
 
     if (unpostedArticles.length === 0) {
-      await logExecution(env.DB, 'post', 'success', 'All articles already posted', filteredArticles.length, 0, 0);
+      await logExecution(
+        env.DB,
+        'post',
+        'success',
+        'All articles already posted',
+        filteredArticles.length,
+        0,
+        0
+      );
       return c.json({ message: 'All articles already posted' });
     }
 
@@ -58,7 +76,15 @@ app.get('/cron/post-articles', async (c) => {
     const evaluationResult = await postService.evaluateArticles(unpostedArticles);
 
     if (!evaluationResult) {
-      await logExecution(env.DB, 'post', 'success', 'Articles skipped due to low meta score', unpostedArticles.length, 0, 0);
+      await logExecution(
+        env.DB,
+        'post',
+        'success',
+        'Articles skipped due to low meta score',
+        unpostedArticles.length,
+        0,
+        0
+      );
       return c.json({ message: 'Articles skipped due to low meta score' });
     }
 
@@ -75,10 +101,18 @@ app.get('/cron/post-articles', async (c) => {
     );
 
     // 5. 最高スコア記事を選定
-    const recommendedEvaluations = batchResult.evaluations.filter(e => e.recommended);
+    const recommendedEvaluations = batchResult.evaluations.filter((e) => e.recommended);
 
     if (recommendedEvaluations.length === 0) {
-      await logExecution(env.DB, 'post', 'success', 'No articles recommended by AI', unpostedArticles.length, 0, evaluationCost);
+      await logExecution(
+        env.DB,
+        'post',
+        'success',
+        'No articles recommended by AI',
+        unpostedArticles.length,
+        0,
+        evaluationCost
+      );
       return c.json({ message: 'No articles recommended by AI' });
     }
 
@@ -86,12 +120,17 @@ app.get('/cron/post-articles', async (c) => {
       current.total_score > best.total_score ? current : best
     );
 
-    const bestArticle = unpostedArticles.find(a => a.id === bestEvaluation.article_id)!;
+    const bestArticle = unpostedArticles.find((a) => a.id === bestEvaluation.article_id);
+    if (!bestArticle) {
+      throw new Error(`Best article not found: ${bestEvaluation.article_id}`);
+    }
 
     // 6. Vectorize: 類似記事チェック
     const similarityCheck = await articleService.checkSimilarity(bestArticle);
     if (similarityCheck.isSimilar) {
-      console.log(`Found similar article: ${similarityCheck.similarArticleId} (score: ${similarityCheck.score})`);
+      console.log(
+        `Found similar article: ${similarityCheck.similarArticleId} (score: ${similarityCheck.score})`
+      );
       // 類似度が高い場合はログに残して今回はスキップせず投稿（要件次第だが、とりあえず投稿する）
       // もしスキップするならここでreturn
     }
@@ -126,17 +165,23 @@ app.get('/cron/post-articles', async (c) => {
       article: bestArticle.title,
       tweet_id: tweetId,
       score: bestEvaluation.total_score,
-      execution_time_ms: executionTime
+      execution_time_ms: executionTime,
     });
   } catch (error) {
-    console.error('Error in post-articles cron:', error);
-
     if (c.env.SLACK_WEBHOOK_URL) {
       const slackClient = new SlackClient(c.env.SLACK_WEBHOOK_URL);
       await slackClient.notifyError(error instanceof Error ? error.message : String(error));
     }
 
-    await logExecution(c.env.DB, 'post', 'error', error instanceof Error ? error.message : String(error), 0, 0, 0);
+    await logExecution(
+      c.env.DB,
+      'post',
+      'error',
+      error instanceof Error ? error.message : String(error),
+      0,
+      0,
+      0
+    );
 
     return c.json({ error: error instanceof Error ? error.message : String(error) }, 500);
   }
@@ -152,12 +197,27 @@ app.get('/cron/update-metrics', async (c) => {
 
     const updatedCount = await metricsService.updateMetrics();
 
-    await logExecution(env.DB, 'metrics_update', 'success', `Updated ${updatedCount} posts`, updatedCount, 0, 0);
+    await logExecution(
+      env.DB,
+      'metrics_update',
+      'success',
+      `Updated ${updatedCount} posts`,
+      updatedCount,
+      0,
+      0
+    );
 
     return c.json({ message: 'Metrics updated successfully', updated_count: updatedCount });
   } catch (error) {
-    console.error('Error in update-metrics cron:', error);
-    await logExecution(c.env.DB, 'metrics_update', 'error', error instanceof Error ? error.message : String(error), 0, 0, 0);
+    await logExecution(
+      c.env.DB,
+      'metrics_update',
+      'error',
+      error instanceof Error ? error.message : String(error),
+      0,
+      0,
+      0
+    );
     return c.json({ error: error instanceof Error ? error.message : String(error) }, 500);
   }
 });
@@ -173,17 +233,28 @@ app.get('/', (c) => {
  * 統計情報
  */
 app.get('/stats', async (c) => {
-  const env = c.env;
-  const metricsService = new MetricsService(env);
-  const stats = await metricsService.getStats();
-  return c.json(stats);
+  try {
+    const env = c.env;
+    const metricsService = new MetricsService(env);
+    const stats = await metricsService.getStats();
+    return c.json(stats);
+  } catch (error) {
+    console.error('Error in /stats endpoint:', error);
+    return c.json(
+      {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      },
+      500
+    );
+  }
 });
 
 export default {
   fetch: app.fetch,
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
     ctx.waitUntil(handleScheduled(event, env));
-  }
+  },
 };
 
 async function handleScheduled(event: ScheduledEvent, env: Env) {

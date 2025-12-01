@@ -1,4 +1,4 @@
-import { QiitaArticle } from '../types/qiita';
+import type { QiitaArticle } from '../types/qiita';
 
 export class QiitaAPIClient {
   private baseUrl = 'https://qiita.com/api/v2';
@@ -16,9 +16,9 @@ export class QiitaAPIClient {
 
     const response = await fetch(url, {
       headers: {
-        'Authorization': `Bearer ${this.token}`,
-        'Content-Type': 'application/json'
-      }
+        Authorization: `Bearer ${this.token}`,
+        'Content-Type': 'application/json',
+      },
     });
 
     if (!response.ok) {
@@ -38,9 +38,7 @@ export class QiitaAPIClient {
       try {
         const articles = await this.getUserArticles(userId);
         allArticles.push(...articles);
-      } catch (error) {
-        console.error(`Failed to fetch articles for user ${userId}:`, error);
-      }
+      } catch (_error) {}
     }
 
     return allArticles;
@@ -50,7 +48,7 @@ export class QiitaAPIClient {
    * 指定した日時以降に更新された記事のみを抽出
    */
   filterArticlesSince(articles: QiitaArticle[], sinceDate: Date): QiitaArticle[] {
-    return articles.filter(article => {
+    return articles.filter((article) => {
       const updatedAt = new Date(article.updated_at);
       return updatedAt > sinceDate;
     });

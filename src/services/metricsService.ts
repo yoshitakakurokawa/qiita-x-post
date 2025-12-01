@@ -1,5 +1,5 @@
-import { Env } from '../types/common';
 import { XAPIClient } from '../api/x';
+import type { Env } from '../types/common';
 
 export class MetricsService {
   private env: Env;
@@ -28,7 +28,7 @@ export class MetricsService {
       return 0;
     }
 
-    const tweetIds = recentPosts.results.map((post: any) => post.tweet_id);
+    const tweetIds = recentPosts.results.map((post) => (post as { tweet_id: string }).tweet_id);
     const metrics = await this.xClient.getTweetMetrics(tweetIds);
 
     // D1を更新
@@ -44,16 +44,23 @@ export class MetricsService {
   }
 
   async getStats() {
-    const totalPosts = await this.env.DB.prepare('SELECT COUNT(*) as count FROM posts').first();
-    const totalCost = await this.env.DB.prepare('SELECT SUM(cost_usd) as total FROM token_usage').first();
-    const avgEngagement = await this.env.DB.prepare(
-      'SELECT AVG(engagement_rate) as avg FROM posts WHERE impressions > 0'
-    ).first();
+    try {
+      const totalPosts = await this.env.DB.prepare('SELECT COUNT(*) as count FROM posts').first();
+      const totalCost = await this.env.DB.prepare(
+        'SELECT SUM(cost_usd) as total FROM token_usage'
+      ).first();
+      const avgEngagement = await this.env.DB.prepare(
+        'SELECT AVG(engagement_rate) as avg FROM posts WHERE impressions > 0'
+      ).first();
 
-    return {
-      total_posts: totalPosts?.count || 0,
-      total_cost_usd: totalCost?.total || 0,
-      avg_engagement_rate: avgEngagement?.avg || 0
-    };
+      return {
+        total_posts: totalPosts?.count || 0,
+        total_cost_usd: totalCost?.total || 0,
+        avg_engagement_rate: avgEngagement?.avg || 0,
+      };
+    } catch (error) {
+      console.error('Error in getStats:', error);
+      throw error;
+    }
   }
 }

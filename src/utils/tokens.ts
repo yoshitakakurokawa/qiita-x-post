@@ -14,7 +14,7 @@ export function compressCodeBlocks(markdown: string): string {
     const important = [
       ...lines.slice(0, 8), // 最初8行
       `// ... (${lines.length - 13}行省略)`,
-      ...lines.slice(-5) // 最後5行
+      ...lines.slice(-5), // 最後5行
     ];
 
     return `\`\`\`${lang || ''}\n${important.join('\n')}\n\`\`\``;
@@ -24,7 +24,12 @@ export function compressCodeBlocks(markdown: string): string {
 /**
  * 記事を評価用に圧縮（バッチ評価用）
  */
-export function compressForEvaluation(article: { id: string; title: string; body: string; tags: Array<{ name: string }> }): string {
+export function compressForEvaluation(article: {
+  id: string;
+  title: string;
+  body: string;
+  tags: Array<{ name: string }>;
+}): string {
   // コードブロックを圧縮
   let compressed = compressCodeBlocks(article.body);
 
@@ -33,7 +38,7 @@ export function compressForEvaluation(article: { id: string; title: string; body
 
   // 最初200文字 + タグ情報
   const preview = compressed.slice(0, 200);
-  const tags = article.tags.map(t => t.name).join(', ');
+  const tags = article.tags.map((t) => t.name).join(', ');
 
   return `[${article.id}] ${article.title}\nタグ: ${tags}\n\n${preview}${compressed.length > 200 ? '...' : ''}`;
 }
@@ -72,7 +77,7 @@ export function optimizeForSummarization(article: { title: string; body: string 
 
   // 3000文字に制限
   const result = importantLines.join('\n');
-  return result.length > 3000 ? result.slice(0, 3000) + '...' : result;
+  return result.length > 3000 ? `${result.slice(0, 3000)}...` : result;
 }
 
 /**
