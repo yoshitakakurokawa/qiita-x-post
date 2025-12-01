@@ -74,38 +74,72 @@ APIs:
 
 ## 処理フロー
 
-### 1. 記事投稿処理 (`/cron/post-articles`)
+### 1. 記事投稿処理
 
-実行タイミング: 月・木 9:00 JST (UTC 0:00)
+#### 1-1. 朝の投稿 (`/cron/post-articles-morning`)
+
+実行タイミング: 毎日 9:00 JST (UTC 0:00)
+
+曜日ごとに異なる戦略を適用：
+
+| 曜日 | 戦略 | 期間 | メタスコア閾値 | 再投稿許可 |
+|------|------|------|--------------|----------|
+| 月曜 | 新しめ + そこそこのスコア | 過去14日間 | 25 | 可（7日以上経過） |
+| 火曜 | 古いけど高スコア | 過去90日間 | 40 | 可（7日以上経過） |
+| 水曜 | 最新の記事優先 | 過去7日間 | 20 | 不可 |
+| 木曜 | 新しめ + そこそこのスコア | 過去14日間 | 25 | 可（7日以上経過） |
+| 金曜 | 古いけど高スコア | 過去90日間 | 40 | 可（7日以上経過） |
+| 土曜 | バランス型 | 過去28日間 | 28 | 可（7日以上経過） |
+| 日曜 | 最新の記事優先 | 過去7日間 | 20 | 不可 |
+
+#### 1-2. 夕方の投稿 (`/cron/post-articles-evening`)
+
+実行タイミング: 毎日 18:00 JST (UTC 9:00)
+
+**戦略**:
+- 過去3日間の記事をチェック（複数同時投稿を見落とさないため）
+- 古い順にソートして最古のものを送信
+- メタスコア閾値: 通常15、アドベントカレンダー期間中は10
+- 再投稿不可（新しい記事のみ）
+
+#### 1-3. 従来の投稿 (`/cron/post-articles`)
+
+後方互換性のため残されていますが、新しい運用では `/cron/post-articles-morning` または `/cron/post-articles-evening` を使用してください。
+
+実行タイミング: 月・木 9:00 JST (UTC 0:00) - 従来の設定
 
 ```
-1. ArticleService.getNewArticles()
+1. ArticleService.fetchNewArticles()
    ├─ Qiita APIから記事取得（ORG_MEMBERS指定）
-   ├─ 前回実行時刻以降の記事のみフィルタ（KV: last_post_run）
+   ├─ 戦略に基づく期間でフィルタ（daysBack）
    ├─ メタスコアリング（likes, stocks, tags, etc.）
-   │  └─ スコア < DEFAULT_SCORE_THRESHOLD → 除外
-   ├─ D1から投稿済み記事を除外
-   └─ VectorServiceで類似記事を除外
-      └─ 類似度 ≥ 0.8 → 除外（重複とみなす）
+   │  └─ スコア < 戦略の閾値 → 除外
+   ├─ ArticleService.getUnpostedArticles()
+   │  ├─ D1から投稿済み記事を除外
+   │  └─ 再投稿許可の場合、クールダウン期間（7日）を過ぎた記事は再投稿可能
+   └─ 新しい記事を優先する場合、更新日時でソート
 
-2. PostService.selectAndPostArticle()
+2. 類似記事の連続送信チェック
+   ├─ ArticleService.checkRecentSimilarPosts()
+   ├─ 過去3日間以内に類似記事（類似度0.8以上）を投稿した場合は除外
+   └─ 上位3件までチェック
+
+3. PostService.evaluateArticles()
    ├─ 記事が0件 → 終了
-   ├─ メタスコアでソート（降順）
-   ├─ 上位10件を選択
    ├─ AIEngine.evaluateBatch()
    │  ├─ トークン圧縮（compressForEvaluation）
    │  ├─ バッチ評価（1回のAPI呼び出し）
    │  ├─ スコア ≥35 → Sonnet 4
    │  ├─ スコア 20-34 → Haiku
    │  └─ スコア <20 → スキップ
-   ├─ AIスコア最高の記事を選択
+   └─ AIスコア最高の記事を選択
+
+4. PostService.postBestArticle()
    ├─ AIEngine.generateTweetContent()
    │  └─ 投稿文生成（最適化済み記事から）
    ├─ XAPIClient.postTweet()
    └─ D1に投稿記録を保存
       └─ token_usage, posts テーブル
-
-3. KVに実行時刻を記録（last_post_run）
 ```
 
 ### 2. メトリクス更新処理 (`/cron/update-metrics`)
@@ -351,19 +385,56 @@ CREATE TABLE deduplication_log (
 }
 ```
 
-#### `GET /cron/post-articles`
+#### `GET /cron/post-articles-morning`
 
-記事評価・投稿処理を実行。
+朝の記事評価・投稿処理を実行。曜日ごとの戦略に基づいて厳選記事を投稿。
 
-**トリガー**: Cron (月・木 9:00 JST)
+**トリガー**: Cron (毎日 9:00 JST)
 
 **レスポンス**:
 ```json
 {
-  "success": true,
-  "message": "Posted article",
-  "article_id": "abc123",
-  "tweet_url": "https://twitter.com/..."
+  "message": "Article posted successfully",
+  "strategy": "morning-mon",
+  "article": "記事タイトル",
+  "tweet_id": "1234567890",
+  "score": 8.5,
+  "execution_time_ms": 2500
+}
+```
+
+#### `GET /cron/post-articles-evening`
+
+夕方の記事評価・投稿処理を実行。その日の新しい記事を優先的に投稿。
+
+**トリガー**: Cron (毎日 18:00 JST)
+
+**レスポンス**:
+```json
+{
+  "message": "Article posted successfully",
+  "strategy": "evening",
+  "article": "記事タイトル",
+  "tweet_id": "1234567890",
+  "score": 7.5,
+  "execution_time_ms": 2000
+}
+```
+
+#### `GET /cron/post-articles` (従来)
+
+記事評価・投稿処理を実行（後方互換性のため残されています）。
+
+**トリガー**: Cron (月・木 9:00 JST) - 従来の設定
+
+**レスポンス**:
+```json
+{
+  "message": "Article posted successfully",
+  "article": "記事タイトル",
+  "tweet_id": "1234567890",
+  "score": 8.5,
+  "execution_time_ms": 2500
 }
 ```
 
@@ -379,6 +450,44 @@ CREATE TABLE deduplication_log (
   "success": true,
   "updated_count": 10
 }
+```
+
+#### `GET /test/fetch-articles`
+
+**テスト用**: 記事取得のみ（Xへの投稿は行わない）
+
+本番環境でデータ取得をテストするためのエンドポイント。記事取得、メタスコアフィルタリング、投稿済み記事の除外までを実行しますが、AI評価やX投稿は実行されません。
+
+**クエリパラメータ**:
+- `since` (オプション): 取得開始日時（ISO 8601形式）。指定がない場合は過去7日間
+
+**レスポンス**:
+```json
+{
+  "message": "Articles fetched successfully (no posting)",
+  "since": "2024-01-01T00:00:00.000Z",
+  "articles": {
+    "total": 10,
+    "list": [...]
+  },
+  "filtered_articles": {
+    "total": 5,
+    "list": [...]
+  },
+  "unposted_articles": {
+    "total": 3,
+    "list": [...]
+  }
+}
+```
+
+**使用例**:
+```bash
+# 過去7日間の記事を取得
+curl https://qiita-x-bot.your-subdomain.workers.dev/test/fetch-articles
+
+# 特定の日時以降の記事を取得
+curl "https://qiita-x-bot.your-subdomain.workers.dev/test/fetch-articles?since=2024-01-01T00:00:00Z"
 ```
 
 ---

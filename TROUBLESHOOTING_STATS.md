@@ -22,8 +22,8 @@ curl https://qiita-x-bot.kurokawa-y.workers.dev/stats
 最も可能性が高い原因は、D1データベースのテーブルが作成されていないことです。
 
 ```bash
-# テーブル一覧を確認
-npx wrangler d1 execute qiita-bot-db --command "SELECT name FROM sqlite_master WHERE type='table'"
+# テーブル一覧を確認（リモート）
+npx wrangler d1 execute qiita-bot-db --remote --command "SELECT name FROM sqlite_master WHERE type='table'"
 ```
 
 **期待される出力**:
@@ -38,9 +38,13 @@ execution_logs
 
 **テーブルが存在しない場合**:
 ```bash
-# スキーマを適用
-npx wrangler d1 execute qiita-bot-db --file=./schema.sql
+# 本番環境（リモート）にスキーマを適用
+npx wrangler d1 execute qiita-bot-db --remote --file=./schema.sql
 ```
+
+**重要**: 本番環境でWorkerを実行する場合は、`--remote` フラグを必ず付けてください。
+- `--remote` なし: ローカル開発環境のD1データベースに適用
+- `--remote` あり: 本番環境（Cloudflare）のD1データベースに適用
 
 ### 3. リアルタイムログの確認
 
@@ -67,11 +71,11 @@ curl https://qiita-x-bot.kurokawa-y.workers.dev/stats
 個別にテーブルが存在するか確認：
 
 ```bash
-# postsテーブルの確認
-npx wrangler d1 execute qiita-bot-db --command "SELECT COUNT(*) FROM posts"
+# postsテーブルの確認（リモート）
+npx wrangler d1 execute qiita-bot-db --remote --command "SELECT COUNT(*) FROM posts"
 
-# token_usageテーブルの確認
-npx wrangler d1 execute qiita-bot-db --command "SELECT COUNT(*) FROM token_usage"
+# token_usageテーブルの確認（リモート）
+npx wrangler d1 execute qiita-bot-db --remote --command "SELECT COUNT(*) FROM token_usage"
 ```
 
 ### 6. スキーマの再適用
@@ -82,23 +86,30 @@ npx wrangler d1 execute qiita-bot-db --command "SELECT COUNT(*) FROM token_usage
 # スキーマファイルの確認
 cat schema.sql
 
-# スキーマを適用
-npx wrangler d1 execute qiita-bot-db --file=./schema.sql
+# 本番環境（リモート）にスキーマを適用
+npx wrangler d1 execute qiita-bot-db --remote --file=./schema.sql
 
-# 適用確認
-npx wrangler d1 execute qiita-bot-db --command "SELECT name FROM sqlite_master WHERE type='table'"
+# 適用確認（リモート）
+npx wrangler d1 execute qiita-bot-db --remote --command "SELECT name FROM sqlite_master WHERE type='table'"
 ```
+
+**重要**: 本番環境でWorkerを実行する場合は、`--remote` フラグを必ず付けてください。
 
 ## よくある原因と解決方法
 
-### 原因1: テーブルが作成されていない
+### 原因1: テーブルが作成されていない（最も一般的）
 
 **症状**: `no such table: posts` というエラー
 
 **解決方法**:
 ```bash
-npx wrangler d1 execute qiita-bot-db --file=./schema.sql
+# 本番環境（リモート）にスキーマを適用
+npx wrangler d1 execute qiita-bot-db --remote --file=./schema.sql
 ```
+
+**重要**: 本番環境でWorkerを実行する場合は、`--remote` フラグを必ず付けてください。
+- `--remote` なし: ローカル開発環境のD1データベースに適用
+- `--remote` あり: 本番環境（Cloudflare）のD1データベースに適用
 
 ### 原因2: データベースIDの不一致
 
@@ -137,14 +148,14 @@ cat wrangler.toml | grep database_id
 ## 確認コマンド一覧
 
 ```bash
-# 1. テーブル一覧確認
-npx wrangler d1 execute qiita-bot-db --command "SELECT name FROM sqlite_master WHERE type='table'"
+# 1. テーブル一覧確認（リモート）
+npx wrangler d1 execute qiita-bot-db --remote --command "SELECT name FROM sqlite_master WHERE type='table'"
 
-# 2. postsテーブルの構造確認
-npx wrangler d1 execute qiita-bot-db --command "PRAGMA table_info(posts)"
+# 2. postsテーブルの構造確認（リモート）
+npx wrangler d1 execute qiita-bot-db --remote --command "PRAGMA table_info(posts)"
 
-# 3. token_usageテーブルの構造確認
-npx wrangler d1 execute qiita-bot-db --command "PRAGMA table_info(token_usage)"
+# 3. token_usageテーブルの構造確認（リモート）
+npx wrangler d1 execute qiita-bot-db --remote --command "PRAGMA table_info(token_usage)"
 
 # 4. データベース一覧確認
 npx wrangler d1 list
@@ -155,4 +166,6 @@ npx wrangler tail
 # 6. エンドポイントテスト
 curl https://qiita-x-bot.kurokawa-y.workers.dev/stats
 ```
+
+**注意**: 本番環境のデータベースを確認する場合は、`--remote` フラグを必ず付けてください。
 

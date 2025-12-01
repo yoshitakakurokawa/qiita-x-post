@@ -99,13 +99,20 @@ npx wrangler d1 create qiita-bot-db
 
 ### 3. D1スキーマの適用
 
+**重要**: 本番環境（リモート）にスキーマを適用するには `--remote` フラグが必要です。
+
 ```bash
-# データベーススキーマを適用
-npx wrangler d1 execute qiita-bot-db --file=./schema.sql
+# 本番環境（リモート）にスキーマを適用
+npx wrangler d1 execute qiita-bot-db --remote --file=./schema.sql
 
 # 成功メッセージを確認
 # ✅ Successfully executed SQL
 ```
+
+**注意**:
+- `--remote` フラグなし: ローカル開発環境のD1データベースに適用
+- `--remote` フラグあり: 本番環境（Cloudflare）のD1データベースに適用
+- 本番環境でWorkerを実行する場合は、**必ず `--remote` フラグを付けてスキーマを適用**してください
 
 ### 4. Vectorize Indexの作成
 
@@ -385,6 +392,63 @@ curl https://qiita-x-post.your-subdomain.workers.dev/cron/post-articles
 curl https://qiita-x-post.your-subdomain.workers.dev/cron/update-metrics
 ```
 
+### 2. テスト用エンドポイント（投稿しない）
+
+**重要**: 本番環境でデータ取得をテストする場合は、以下のエンドポイントを使用してください。Xへの投稿は行われません。
+
+```bash
+# 記事取得のみ（投稿しない）
+# 過去7日間の記事を取得
+curl https://qiita-x-bot.kurokawa-y.workers.dev/test/fetch-articles
+
+# 特定の日時以降の記事を取得（ISO 8601形式）
+curl "https://qiita-x-bot.kurokawa-y.workers.dev/test/fetch-articles?since=2024-01-01T00:00:00Z"
+```
+
+**レスポンス例**:
+```json
+{
+  "message": "Articles fetched successfully (no posting)",
+  "since": "2024-01-01T00:00:00.000Z",
+  "articles": {
+    "total": 10,
+    "list": [
+      {
+        "id": "abc123",
+        "title": "記事タイトル",
+        "url": "https://qiita.com/...",
+        "author": "user_id",
+        "updated_at": "2024-01-02T10:00:00Z",
+        "likes_count": 5,
+        "stocks_count": 3
+      }
+    ]
+  },
+  "filtered_articles": {
+    "total": 5,
+    "list": [
+      {
+        "id": "abc123",
+        "title": "記事タイトル",
+        "url": "https://qiita.com/...",
+        "author": "user_id",
+        "meta_score": 30,
+        "updated_at": "2024-01-02T10:00:00Z"
+      }
+    ]
+  },
+  "unposted_articles": {
+    "total": 3,
+    "list": [...]
+  }
+}
+```
+
+**注意**: 
+- このエンドポイントは**Xへの投稿を行いません**
+- 記事取得、メタスコアフィルタリング、投稿済み記事の除外までを実行します
+- AI評価やX投稿は実行されません
+
 ### 2. ログの確認
 
 リアルタイムでログを確認：
@@ -496,8 +560,11 @@ npx wrangler secret put <SECRET_NAME>
 
 2. **テーブルが存在しない場合、スキーマを適用**:
    ```bash
-   npx wrangler d1 execute qiita-bot-db --file=./schema.sql
+   # 本番環境（リモート）にスキーマを適用
+   npx wrangler d1 execute qiita-bot-db --remote --file=./schema.sql
    ```
+   
+   **重要**: 本番環境でWorkerを実行する場合は、`--remote` フラグを必ず付けてください。
 
 3. **エラーログを確認**:
    ```bash

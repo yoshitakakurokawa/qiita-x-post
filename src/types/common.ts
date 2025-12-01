@@ -18,6 +18,10 @@ export interface Env {
   // Environment variables
   ORG_MEMBERS: string;
   DEFAULT_SCORE_THRESHOLD: string;
+  RECENT_POST_COOLDOWN_DAYS?: string; // 連続送信防止期間（日）
+  SIMILAR_POST_COOLDOWN_DAYS?: string; // 類似記事の連続送信防止期間（日）
+  ADVENT_CALENDAR_THRESHOLD?: string; // アドベントカレンダー期間のメタスコア閾値
+  EVENING_POST_THRESHOLD?: string; // 夕方投稿のメタスコア閾値
 }
 
 export interface ArticleScore {
