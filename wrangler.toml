@@ -35,12 +35,12 @@ index_name = "article-embeddings"
 
 # Environment variables (non-secret)
 [vars]
-ORG_MEMBERS = "c_nit,wakuto_kurokawa,wakuto-KK,wakuto-o-ga,wakuto_m-n,voo,hato_code,k3black,wakuto-ariga-owl"  # 組織メンバーのQiita ID（カンマ区切り）
-DEFAULT_SCORE_THRESHOLD = "25"  # メタスコアの閾値（デフォルト）
+ORG_MEMBERS = "c_nit,wakuto_kurokawa,wakuto-KK,wakuto-o-ga,wakuto_m-n,voo,hato_code,k3black,wakuto-ariga-owl,wakuto_hirayama,wakuto_takagi"  # 組織メンバーのQiita ID（カンマ区切り）
+DEFAULT_SCORE_THRESHOLD = "12"  # メタスコアの閾値（デフォルト）
 RECENT_POST_COOLDOWN_DAYS = "7"  # 連続送信防止期間（日）
 SIMILAR_POST_COOLDOWN_DAYS = "3"  # 類似記事の連続送信防止期間（日）
-ADVENT_CALENDAR_THRESHOLD = "10"  # アドベントカレンダー期間のメタスコア閾値
-EVENING_POST_THRESHOLD = "15"  # 夕方投稿のメタスコア閾値
+ADVENT_CALENDAR_THRESHOLD = "5"  # アドベントカレンダー期間のメタスコア閾値
+EVENING_POST_THRESHOLD = "8"  # 夕方投稿のメタスコア閾値
 
 [observability]
 enabled = false
