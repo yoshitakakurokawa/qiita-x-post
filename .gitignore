@@ -5,3 +5,9 @@ dist/
 .env
 *.log
 .DS_Store
+
+# Claude Code personal settings (exclude)
+.claude/settings*.json
+
+# Serena memories and settings (exclude)
+.serena/
