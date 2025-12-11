@@ -40,10 +40,7 @@ export class ArticleService {
     articles: Array<QiitaArticle & { metaScore: number }>,
     allowRepost = false
   ): Promise<Array<QiitaArticle & { metaScore: number }>> {
-    const cooldownDays = parseInt(
-      this.env.RECENT_POST_COOLDOWN_DAYS || '7',
-      10
-    );
+    const cooldownDays = parseInt(this.env.RECENT_POST_COOLDOWN_DAYS || '7', 10);
     const cooldownDate = new Date(Date.now() - cooldownDays * 24 * 60 * 60 * 1000);
 
     const unpostedArticles = [];
@@ -77,10 +74,7 @@ export class ArticleService {
   async checkRecentSimilarPosts(
     article: QiitaArticle
   ): Promise<{ hasRecentSimilar: boolean; similarArticleId?: string; score?: number }> {
-    const cooldownDays = parseInt(
-      this.env.SIMILAR_POST_COOLDOWN_DAYS || '3',
-      10
-    );
+    const cooldownDays = parseInt(this.env.SIMILAR_POST_COOLDOWN_DAYS || '3', 10);
     const cooldownDate = new Date(Date.now() - cooldownDays * 24 * 60 * 60 * 1000);
 
     if (!this.vectorService) return { hasRecentSimilar: false };

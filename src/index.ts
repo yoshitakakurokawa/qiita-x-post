@@ -6,11 +6,11 @@ import { PostService } from './services/postService';
 import type { Env } from './types/common';
 import { logExecution } from './utils/logger';
 import {
-  weekdayStrategies,
   getCurrentWeekday,
-  isAdventCalendarPeriod,
   getEveningStrategy,
+  isAdventCalendarPeriod,
   type PostingStrategy,
+  weekdayStrategies,
 } from './utils/postingStrategy';
 import { filterByMetaScore } from './utils/scoring';
 
@@ -247,7 +247,7 @@ app.get('/stats', async (c) => {
     const stats = await metricsService.getStats();
     return c.json(stats);
   } catch (error) {
-    console.error('Error in /stats endpoint:', error);
+    console.log('Error in /stats endpoint:', error);
     return c.json(
       {
         error: error instanceof Error ? error.message : String(error),
@@ -336,7 +336,7 @@ app.get('/test/fetch-articles', async (c) => {
       },
     });
   } catch (error) {
-    console.error('[TEST] Error in /test/fetch-articles endpoint:', error);
+    console.log('[TEST] Error in /test/fetch-articles endpoint:', error);
     return c.json(
       {
         error: error instanceof Error ? error.message : String(error),
@@ -370,15 +370,17 @@ async function postArticleWithStrategy(
 
     if (allArticles.length === 0) {
       await logExecution(env.DB, 'post', 'success', `No articles found (${strategyName})`, 0, 0, 0);
-      return new Response(
-        JSON.stringify({ message: `No articles found (${strategyName})` }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ message: `No articles found (${strategyName})` }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     // 2. メタスコアフィルタリング
     const filteredArticles = filterByMetaScore(allArticles, strategy.metaScoreThreshold);
-    console.log(`[${strategyName}] ${filteredArticles.length} articles passed meta score filter (threshold: ${strategy.metaScoreThreshold})`);
+    console.log(
+      `[${strategyName}] ${filteredArticles.length} articles passed meta score filter (threshold: ${strategy.metaScoreThreshold})`
+    );
 
     if (filteredArticles.length === 0) {
       await logExecution(
@@ -401,7 +403,9 @@ async function postArticleWithStrategy(
       filteredArticles,
       strategy.allowRepost
     );
-    console.log(`[${strategyName}] ${unpostedArticles.length} articles not yet posted (allowRepost: ${strategy.allowRepost})`);
+    console.log(
+      `[${strategyName}] ${unpostedArticles.length} articles not yet posted (allowRepost: ${strategy.allowRepost})`
+    );
 
     if (unpostedArticles.length === 0) {
       await logExecution(
@@ -461,7 +465,9 @@ async function postArticleWithStrategy(
         0
       );
       return new Response(
-        JSON.stringify({ message: `All candidates skipped due to recent similar posts (${strategyName})` }),
+        JSON.stringify({
+          message: `All candidates skipped due to recent similar posts (${strategyName})`,
+        }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -561,9 +567,7 @@ async function postArticleWithStrategy(
   } catch (error) {
     if (env.SLACK_WEBHOOK_URL) {
       const slackClient = new SlackClient(env.SLACK_WEBHOOK_URL);
-      await slackClient.notifyError(
-        error instanceof Error ? error.message : String(error)
-      );
+      await slackClient.notifyError(error instanceof Error ? error.message : String(error));
     }
 
     await logExecution(

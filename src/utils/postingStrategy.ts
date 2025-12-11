@@ -91,7 +91,10 @@ export function isAdventCalendarPeriod(): boolean {
 /**
  * 夕方投稿用の戦略を取得
  */
-export function getEveningStrategy(env: { EVENING_POST_THRESHOLD?: string }): PostingStrategy {
+export function getEveningStrategy(env: {
+  EVENING_POST_THRESHOLD?: string;
+  ADVENT_CALENDAR_THRESHOLD?: string;
+}): PostingStrategy {
   const threshold = parseInt(env.EVENING_POST_THRESHOLD || '15', 10);
   const isAdvent = isAdventCalendarPeriod();
   const adventThreshold = parseInt(env.ADVENT_CALENDAR_THRESHOLD || '10', 10);
@@ -103,4 +106,3 @@ export function getEveningStrategy(env: { EVENING_POST_THRESHOLD?: string }): Po
     allowRepost: false,
   };
 }
-

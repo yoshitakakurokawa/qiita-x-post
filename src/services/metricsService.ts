@@ -59,7 +59,7 @@ export class MetricsService {
         avg_engagement_rate: avgEngagement?.avg || 0,
       };
     } catch (error) {
-      console.error('Error in getStats:', error);
+      console.log('Error in getStats:', error);
       throw error;
     }
   }
