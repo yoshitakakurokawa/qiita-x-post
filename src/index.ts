@@ -377,29 +377,38 @@ async function postArticleWithStrategy(
     }
 
     // 2. メタスコアフィルタリング
-    const filteredArticles = filterByMetaScore(allArticles, strategy.metaScoreThreshold);
+    let filteredArticles = filterByMetaScore(allArticles, strategy.metaScoreThreshold);
+    let isFallback = false;
     console.log(
       `[${strategyName}] ${filteredArticles.length} articles passed meta score filter (threshold: ${strategy.metaScoreThreshold})`
     );
 
     if (filteredArticles.length === 0) {
-      await logExecution(
-        env.DB,
-        'post',
-        'success',
-        `No articles passed meta score filter (${strategyName})`,
-        allArticles.length,
-        0,
-        0
-      );
-      return new Response(
-        JSON.stringify({ message: `No articles passed meta score filter (${strategyName})` }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      if (!strategy.fallbackEnabled) {
+        await logExecution(
+          env.DB,
+          'post',
+          'success',
+          `No articles passed meta score filter (${strategyName})`,
+          allArticles.length,
+          0,
+          0
+        );
+        return new Response(
+          JSON.stringify({ message: `No articles passed meta score filter (${strategyName})` }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+      // フォールバック: 閾値なしで全記事を取得（メタスコア順）
+      filteredArticles = filterByMetaScore(allArticles, 0);
+      isFallback = true;
+      console.log(
+        `[${strategyName}] Fallback: using all ${filteredArticles.length} articles without threshold`
       );
     }
 
     // 3. 投稿済み記事を除外（再投稿許可の設定を考慮）
-    const unpostedArticles = await articleService.getUnpostedArticles(
+    let unpostedArticles = await articleService.getUnpostedArticles(
       filteredArticles,
       strategy.allowRepost
     );
@@ -408,19 +417,30 @@ async function postArticleWithStrategy(
     );
 
     if (unpostedArticles.length === 0) {
-      await logExecution(
-        env.DB,
-        'post',
-        'success',
-        `All articles already posted (${strategyName})`,
-        filteredArticles.length,
-        0,
-        0
-      );
-      return new Response(
-        JSON.stringify({ message: `All articles already posted (${strategyName})` }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
+      if (strategy.fallbackEnabled) {
+        // フォールバック: allowRepost設定に関わらず再投稿候補を取得
+        const repostCandidates = await articleService.getUnpostedArticles(filteredArticles, true);
+        if (repostCandidates.length > 0) {
+          console.log(`[${strategyName}] Fallback repost: ${repostCandidates.length} candidates`);
+          unpostedArticles = repostCandidates;
+          isFallback = true;
+        }
+      }
+      if (unpostedArticles.length === 0) {
+        await logExecution(
+          env.DB,
+          'post',
+          'success',
+          `All articles already posted (${strategyName})`,
+          filteredArticles.length,
+          0,
+          0
+        );
+        return new Response(
+          JSON.stringify({ message: `All articles already posted (${strategyName})` }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     // 4. ソート（戦略に基づく）
@@ -473,7 +493,13 @@ async function postArticleWithStrategy(
     }
 
     // 6. AI評価（バッチ処理）
-    const evaluationResult = await postService.evaluateArticles(finalCandidates);
+    let evaluationResult = await postService.evaluateArticles(finalCandidates, isFallback);
+
+    if (!evaluationResult && strategy.fallbackEnabled) {
+      // フォールバック: Haiku で強制評価
+      console.log(`[${strategyName}] Fallback: re-evaluating with haiku and fallback mode`);
+      evaluationResult = await postService.evaluateArticles(finalCandidates, true);
+    }
 
     if (!evaluationResult) {
       await logExecution(
@@ -504,7 +530,20 @@ async function postArticleWithStrategy(
     );
 
     // 7. 最高スコア記事を選定
-    const recommendedEvaluations = batchResult.evaluations.filter((e) => e.recommended);
+    let recommendedEvaluations = batchResult.evaluations.filter((e) => e.recommended);
+
+    if (recommendedEvaluations.length === 0 && strategy.fallbackEnabled) {
+      // フォールバック: 推薦なしの場合、フォールバックモードで再評価
+      console.log(`[${strategyName}] Fallback: no recommended articles, re-evaluating in fallback mode`);
+      const fallbackResult = await postService.evaluateArticles(finalCandidates, true);
+      if (fallbackResult) {
+        const fallbackRecommended = fallbackResult.result.evaluations.filter((e) => e.recommended);
+        if (fallbackRecommended.length > 0) {
+          recommendedEvaluations = fallbackRecommended;
+          console.log(`[${strategyName}] Fallback evaluation found ${fallbackRecommended.length} recommended articles`);
+        }
+      }
+    }
 
     if (recommendedEvaluations.length === 0) {
       await logExecution(
