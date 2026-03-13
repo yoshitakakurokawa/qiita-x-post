@@ -534,13 +534,17 @@ async function postArticleWithStrategy(
 
     if (recommendedEvaluations.length === 0 && strategy.fallbackEnabled) {
       // フォールバック: 推薦なしの場合、フォールバックモードで再評価
-      console.log(`[${strategyName}] Fallback: no recommended articles, re-evaluating in fallback mode`);
+      console.log(
+        `[${strategyName}] Fallback: no recommended articles, re-evaluating in fallback mode`
+      );
       const fallbackResult = await postService.evaluateArticles(finalCandidates, true);
       if (fallbackResult) {
         const fallbackRecommended = fallbackResult.result.evaluations.filter((e) => e.recommended);
         if (fallbackRecommended.length > 0) {
           recommendedEvaluations = fallbackRecommended;
-          console.log(`[${strategyName}] Fallback evaluation found ${fallbackRecommended.length} recommended articles`);
+          console.log(
+            `[${strategyName}] Fallback evaluation found ${fallbackRecommended.length} recommended articles`
+          );
         }
       }
     }

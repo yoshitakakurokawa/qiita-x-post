@@ -36,7 +36,11 @@ export class PostService {
     const modelType = fallback ? 'haiku' : selectAIModel(articles[0].metaScore);
     if (modelType === 'skip') return null;
 
-    const batchResult = await this.aiEngine.evaluateBatch(articles.slice(0, 5), modelType, fallback);
+    const batchResult = await this.aiEngine.evaluateBatch(
+      articles.slice(0, 5),
+      modelType,
+      fallback
+    );
 
     const cost = this.aiEngine.calculateCost(
       batchResult.total_tokens * 0.7,
