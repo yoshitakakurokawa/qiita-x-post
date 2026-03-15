@@ -59,6 +59,96 @@ describe('scoring', () => {
       // Total: 1
       expect(score).toBe(1);
     });
+
+    it('should give 7 freshness points for 7-30 day old article', () => {
+      const article: QiitaArticle = {
+        ...mockArticle,
+        updated_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+      };
+      const score = calculateMetaScore(article);
+      // Freshness: 7-30 days -> 7
+      expect(score).toBeGreaterThanOrEqual(7);
+    });
+
+    it('should give 5 freshness points for 30-90 day old article', () => {
+      const article: QiitaArticle = {
+        ...mockArticle,
+        updated_at: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+      };
+      const score = calculateMetaScore(article);
+      // Freshness: 30-90 days -> 5
+      expect(score).toBeGreaterThanOrEqual(5);
+    });
+
+    it('should give 3 freshness points for 90-365 day old article', () => {
+      const article: QiitaArticle = {
+        ...mockArticle,
+        updated_at: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString(),
+      };
+      const score = calculateMetaScore(article);
+      // Freshness: 90-365 days -> 3
+      expect(score).toBeGreaterThanOrEqual(3);
+    });
+
+    it('should give 2 completeness points for body >= 3000 chars', () => {
+      const article: QiitaArticle = {
+        ...mockArticle,
+        likes_count: 0,
+        stocks_count: 0,
+        comments_count: 0,
+        tags: [],
+        updated_at: new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString(),
+        body: 'a'.repeat(3000),
+      };
+      const score = calculateMetaScore(article);
+      // Freshness: 1, Completeness body: 2 -> total 3
+      expect(score).toBe(3);
+    });
+
+    it('should give 1 completeness point for body 1500-2999 chars', () => {
+      const article: QiitaArticle = {
+        ...mockArticle,
+        likes_count: 0,
+        stocks_count: 0,
+        comments_count: 0,
+        tags: [],
+        updated_at: new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString(),
+        body: 'a'.repeat(1500),
+      };
+      const score = calculateMetaScore(article);
+      // Freshness: 1, Completeness body: 1 -> total 2
+      expect(score).toBe(2);
+    });
+
+    it('should give 1 completeness point for exactly 1 code block', () => {
+      const article: QiitaArticle = {
+        ...mockArticle,
+        likes_count: 0,
+        stocks_count: 0,
+        comments_count: 0,
+        tags: [],
+        updated_at: new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString(),
+        body: 'Content\n\n```js\nconsole.log("hi");\n```',
+      };
+      const score = calculateMetaScore(article);
+      // Freshness: 1, Completeness code: 1 -> total 2
+      expect(score).toBe(2);
+    });
+
+    it('should give 1 completeness point for 3+ headings', () => {
+      const article: QiitaArticle = {
+        ...mockArticle,
+        likes_count: 0,
+        stocks_count: 0,
+        comments_count: 0,
+        tags: [],
+        updated_at: new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString(),
+        body: '# H1\n\n## H2\n\n### H3\n\nContent',
+      };
+      const score = calculateMetaScore(article);
+      // Freshness: 1, Completeness headings: 1 -> total 2
+      expect(score).toBe(2);
+    });
   });
 
   describe('filterByMetaScore', () => {
@@ -78,6 +168,28 @@ describe('scoring', () => {
       const filtered = filterByMetaScore(articles, 25);
       expect(filtered).toHaveLength(1);
       expect(filtered[0].id).toBe('1');
+    });
+
+    it('should sort multiple passing articles by score descending', () => {
+      const highScore = { ...mockArticle, id: 'high', likes_count: 100, stocks_count: 50 };
+      const midScore = {
+        ...mockArticle,
+        id: 'mid',
+        likes_count: 10,
+        stocks_count: 5,
+        updated_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+      };
+      const filtered = filterByMetaScore([midScore, highScore], 5);
+      expect(filtered).toHaveLength(2);
+      expect(filtered[0].metaScore).toBeGreaterThanOrEqual(filtered[1].metaScore);
+    });
+
+    it('should return empty array when no articles pass threshold', () => {
+      const filtered = filterByMetaScore(
+        [{ ...mockArticle, likes_count: 0, stocks_count: 0, tags: [] }],
+        100
+      );
+      expect(filtered).toHaveLength(0);
     });
   });
 

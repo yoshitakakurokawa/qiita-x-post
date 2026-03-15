@@ -28,14 +28,19 @@ export class PostService {
   }
 
   async evaluateArticles(
-    articles: Array<QiitaArticle & { metaScore: number }>
+    articles: Array<QiitaArticle & { metaScore: number }>,
+    fallback = false
   ): Promise<{ result: BatchEvaluationResult; cost: number } | null> {
     if (articles.length === 0) return null;
 
-    const modelType = selectAIModel(articles[0].metaScore);
+    const modelType = fallback ? 'haiku' : selectAIModel(articles[0].metaScore);
     if (modelType === 'skip') return null;
 
-    const batchResult = await this.aiEngine.evaluateBatch(articles.slice(0, 5), modelType);
+    const batchResult = await this.aiEngine.evaluateBatch(
+      articles.slice(0, 5),
+      modelType,
+      fallback
+    );
 
     const cost = this.aiEngine.calculateCost(
       batchResult.total_tokens * 0.7,
@@ -60,7 +65,8 @@ export class PostService {
 
     // Post to X
     const hashtags = tweetContent.hashtags.map((tag) => `#${tag}`).join(' ');
-    const fullTweetText = `${tweetContent.text}\n\n${article.url}\n\n${hashtags}`;
+    const commentLine = tweetContent.comment ? `${tweetContent.comment}\n\n` : '';
+    const fullTweetText = `${commentLine}${tweetContent.text}\n\n${article.url}\n\n${hashtags}`;
     const tweetResponse = await this.xClient.postTweet(fullTweetText);
 
     // Save to DB

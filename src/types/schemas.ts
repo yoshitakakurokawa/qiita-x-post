@@ -41,6 +41,7 @@ export const BatchEvaluationResultSchema = v.object({
 });
 
 export const TweetContentSchema = v.object({
+  comment: v.optional(v.string(), ''),
   text: v.string(),
   hashtags: v.array(v.string()),
   estimated_engagement: v.number(),

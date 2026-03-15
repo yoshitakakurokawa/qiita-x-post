@@ -7,6 +7,7 @@ export interface PostingStrategy {
   metaScoreThreshold: number; // メタスコアの閾値
   prioritizeRecent: boolean; // 新しい記事を優先するか
   allowRepost: boolean; // 再投稿を許可するか（7日以上経過）
+  fallbackEnabled: boolean; // 閾値未満でも最善の記事を1件投稿するか
 }
 
 /**
@@ -16,52 +17,59 @@ export interface PostingStrategy {
 export const weekdayStrategies: Record<number, PostingStrategy> = {
   0: {
     // 日曜: 最新の記事優先
-    daysBack: 7,
-    metaScoreThreshold: 20,
+    daysBack: 14,
+    metaScoreThreshold: 8,
     prioritizeRecent: true,
     allowRepost: false,
+    fallbackEnabled: true,
   },
   1: {
     // 月曜: 新しめ + そこそこのスコア
-    daysBack: 14,
-    metaScoreThreshold: 25,
+    daysBack: 30,
+    metaScoreThreshold: 12,
     prioritizeRecent: true,
     allowRepost: true,
+    fallbackEnabled: true,
   },
   2: {
-    // 火曜: 古いけど高スコア
-    daysBack: 90,
-    metaScoreThreshold: 40,
+    // 火曜: 古いけど高スコア（閾値緩和）
+    daysBack: 180,
+    metaScoreThreshold: 20,
     prioritizeRecent: false,
     allowRepost: true,
+    fallbackEnabled: true,
   },
   3: {
     // 水曜: 最新の記事優先
-    daysBack: 7,
-    metaScoreThreshold: 20,
+    daysBack: 14,
+    metaScoreThreshold: 8,
     prioritizeRecent: true,
     allowRepost: false,
+    fallbackEnabled: true,
   },
   4: {
     // 木曜: 新しめ + そこそこのスコア
-    daysBack: 14,
-    metaScoreThreshold: 25,
+    daysBack: 30,
+    metaScoreThreshold: 12,
     prioritizeRecent: true,
     allowRepost: true,
+    fallbackEnabled: true,
   },
   5: {
-    // 金曜: 古いけど高スコア
-    daysBack: 90,
-    metaScoreThreshold: 40,
+    // 金曜: 古いけど高スコア（閾値緩和）
+    daysBack: 180,
+    metaScoreThreshold: 20,
     prioritizeRecent: false,
     allowRepost: true,
+    fallbackEnabled: true,
   },
   6: {
     // 土曜: バランス型
-    daysBack: 28,
-    metaScoreThreshold: 28,
+    daysBack: 60,
+    metaScoreThreshold: 12,
     prioritizeRecent: true,
     allowRepost: true,
+    fallbackEnabled: true,
   },
 };
 
@@ -100,9 +108,10 @@ export function getEveningStrategy(env: {
   const adventThreshold = parseInt(env.ADVENT_CALENDAR_THRESHOLD || '10', 10);
 
   return {
-    daysBack: 3, // 過去3日間（複数同時投稿を見落とさないため）
+    daysBack: 7, // 過去7日間（複数同時投稿を見落とさないため）
     metaScoreThreshold: isAdvent ? adventThreshold : threshold,
     prioritizeRecent: false, // 古い順にソート（最古のものを送信）
     allowRepost: false,
+    fallbackEnabled: true,
   };
 }
