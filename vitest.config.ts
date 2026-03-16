@@ -11,11 +11,21 @@ export default defineConfig({
       thresholds: {
         lines: 70,
         functions: 70,
-        branches: 66, // Temporarily lowered due to current coverage
+        branches: 70,
         statements: 70,
       },
     },
     include: ['src/**/*.test.ts'],
     exclude: ['node_modules', '.wrangler', 'dist'],
+    // Vitest 4.1 Test Tags — pre-register all tags used in test files
+    // Usage: vitest --ui → tag filter panel
+    //        vitest run --reporter=verbose (shows tags per suite)
+    tags: [
+      { name: 'unit' },
+      { name: 'integration', timeout: 15000 },
+      { name: 'scoring' },
+      { name: 'tokens' },
+      { name: 'ai' },
+    ],
   },
 });

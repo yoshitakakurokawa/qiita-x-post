@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { QiitaArticle } from '../types/qiita';
 import { calculateMetaScore, estimateTokens, filterByMetaScore, selectAIModel } from './scoring';
 
-describe('scoring', () => {
+describe('scoring', { tags: ['unit', 'scoring'] }, () => {
   const mockArticle: QiitaArticle = {
     id: '1',
     title: 'Test Article',
