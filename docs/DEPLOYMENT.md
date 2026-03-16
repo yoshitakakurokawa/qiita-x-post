@@ -10,8 +10,9 @@
 4. [APIキーの取得](#apiキーの取得)
 5. [設定ファイルの編集](#設定ファイルの編集)
 6. [デプロイ](#デプロイ)
-7. [動作確認](#動作確認)
-8. [トラブルシューティング](#トラブルシューティング)
+7. [GitHub Actions CI/CDの設定](#github-actions-cicdの設定)
+8. [動作確認](#動作確認)
+9. [トラブルシューティング](#トラブルシューティング)
 
 ---
 
@@ -367,6 +368,57 @@ curl https://qiita-x-post.your-subdomain.workers.dev/
 # 統計情報の確認
 curl https://qiita-x-post.your-subdomain.workers.dev/stats
 ```
+
+---
+
+## GitHub Actions CI/CDの設定
+
+GitHubリポジトリへのプッシュ時に自動でテスト・デプロイを行うには、以下のSecretsをGitHubに設定する必要があります。
+
+### 1. Cloudflare APIトークンの作成
+
+1. [Cloudflare APIトークン設定](https://dash.cloudflare.com/profile/api-tokens) にアクセス
+2. 「Create Token」をクリック
+3. 「Edit Cloudflare Workers」テンプレートを選択（または Custom Tokenで `Workers Scripts: Edit` 権限を付与）
+4. 「Continue to summary」→「Create Token」をクリック
+5. **表示されたトークンをメモ**（再表示不可）
+
+### 2. Cloudflare Account IDの確認
+
+1. [Cloudflare Dashboard](https://dash.cloudflare.com/) にアクセス
+2. 「Workers & Pages」を選択
+3. 右サイドバーに表示される **Account ID** をメモ
+
+### 3. GitHub Secretsへの登録
+
+GitHubリポジトリの **Settings → Secrets and variables → Actions** を開き、以下を追加：
+
+| Secret名 | 値 | 説明 |
+|---|---|---|
+| `CLOUDFLARE_API_TOKEN` | 上記で作成したAPIトークン | Wranglerのデプロイに使用 |
+| `CLOUDFLARE_ACCOUNT_ID` | CloudflareのAccount ID | デプロイ先アカウントの指定 |
+
+> **オプション**: Codecovでカバレッジレポートをアップロードする場合は `CODECOV_TOKEN` も設定してください。
+
+### 4. 動作確認
+
+設定後、`main`ブランチへのプッシュで自動デプロイが実行されます：
+
+```
+push to main
+  → test job（typecheck / lint / format / test:coverage）
+  → deploy job（wrangler deploy）
+```
+
+ワークフローの実行状況はGitHubリポジトリの「Actions」タブで確認できます。
+
+### トラブルシューティング: `CLOUDFLARE_API_TOKEN` エラー
+
+```
+✘ [ERROR] In a non-interactive environment, it's necessary to set a CLOUDFLARE_API_TOKEN
+```
+
+このエラーが表示された場合、`CLOUDFLARE_API_TOKEN` SecretがGitHubに設定されていません。上記手順で設定してください。
 
 ---
 
