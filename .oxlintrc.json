@@ -1,0 +1,21 @@
+{
+  "plugins": ["typescript"],
+  "rules": {
+    "eqeqeq": "error",
+    "no-debugger": "error",
+    "no-console": ["warn", { "allow": ["log"] }],
+    "prefer-const": "error",
+    "prefer-template": "warn",
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/no-non-null-assertion": "warn",
+    "no-unused-vars": [
+      "error",
+      {
+        "varsIgnorePattern": "^_",
+        "argsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ]
+  },
+  "ignorePatterns": ["node_modules/", ".wrangler/", "dist/", ".serena/", ".claude/"]
+}

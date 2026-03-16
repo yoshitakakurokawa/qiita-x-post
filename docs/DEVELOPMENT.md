@@ -21,18 +21,21 @@
 **目標**: 基本動作の確認
 
 **実装内容**:
+
 - ✅ Qiita API記事取得
 - ✅ メタスコア計算
 - ✅ 単純なAI評価（最適化なし）
 - ✅ X投稿
 
 **実装ファイル**:
+
 - `src/api/qiita.ts`: Qiita APIクライアント
 - `src/utils/scoring.ts`: メタスコア計算
 - `src/ai/engine.ts`: AI評価エンジン
 - `src/api/x.ts`: X APIクライアント
 
 **確認事項**:
+
 - [ ] Qiita APIから記事を取得できる
 - [ ] メタスコアが正しく計算される
 - [ ] AI評価が動作する
@@ -47,16 +50,19 @@
 **目標**: コスト削減の実証
 
 **実装内容**:
+
 - ✅ トークン最適化（コードブロック圧縮、画像簡略化）
 - ✅ バッチ処理（複数記事を1回のAPI呼び出しで評価）
 - ✅ キャッシュ戦略（KV Storage）
 
 **実装ファイル**:
+
 - `src/utils/tokens.ts`: トークン最適化関数
 - `src/ai/engine.ts`: バッチ評価機能
 - `src/index.ts`: キャッシュロジック
 
 **確認事項**:
+
 - [ ] トークン数が73%以上削減されている
 - [ ] バッチ処理で複数記事を1回で評価できる
 - [ ] キャッシュが正しく動作する
@@ -71,16 +77,19 @@
 **目標**: システムの完成度向上
 
 **実装内容**:
+
 - ✅ ベクトル重複除去（Vectorize + Workers AI）
 - ✅ エンゲージメント学習（メトリクス取得）
 - ⏳ 学習パターンの分析・活用（将来実装予定）
 
 **実装ファイル**:
+
 - `src/utils/vector.ts`: ベクトル埋め込み生成
 - `src/services/articleService.ts`: 類似度チェック
 - `src/services/metricsService.ts`: メトリクス更新
 
 **確認事項**:
+
 - [ ] 類似記事が正しく検出される
 - [ ] メトリクスが正しく取得・記録される
 - [ ] 重複投稿が防止される
@@ -94,11 +103,13 @@
 **目標**: 本番環境での安定運用と技術記事執筆
 
 **実装内容**:
+
 - ✅ テスト・デバッグ
 - ✅ モニタリング設定
 - ⏳ 技術記事執筆
 
 **確認事項**:
+
 - [ ] 全テストがパスする
 - [ ] エラーハンドリングが適切
 - [ ] ログが正しく記録される
@@ -116,13 +127,14 @@
 
 **テスト対象**:
 
-| ファイル | テスト内容 |
-|---------|-----------|
+| ファイル               | テスト内容             |
+| ---------------------- | ---------------------- |
 | `src/utils/scoring.ts` | メタスコア計算の正確性 |
-| `src/utils/tokens.ts` | トークン最適化の圧縮率 |
-| `src/utils/vector.ts` | ベクトル埋め込み生成 |
+| `src/utils/tokens.ts`  | トークン最適化の圧縮率 |
+| `src/utils/vector.ts`  | ベクトル埋め込み生成   |
 
 **実行方法**:
+
 ```bash
 # 全テスト実行
 bun test
@@ -135,6 +147,7 @@ bun run test:ui
 ```
 
 **テスト例**:
+
 ```typescript
 // src/utils/scoring.test.ts
 import { describe, it, expect } from 'vitest';
@@ -154,6 +167,7 @@ describe('calculateMetaScore', () => {
 ```
 
 **確認事項**:
+
 - [ ] メタスコア計算が正確
 - [ ] トークン圧縮率が期待値以上
 - [ ] エッジケース（空文字、null等）に対応
@@ -166,27 +180,31 @@ describe('calculateMetaScore', () => {
 
 **テスト対象**:
 
-| テストケース | 説明 |
-|-------------|------|
-| Qiita API → メタスコア → AI評価 | 記事取得から評価までの流れ |
-| キャッシュヒット率 | KV Storageのキャッシュ動作 |
-| コスト計測 | 実際のトークン使用量とコスト |
+| テストケース                    | 説明                         |
+| ------------------------------- | ---------------------------- |
+| Qiita API → メタスコア → AI評価 | 記事取得から評価までの流れ   |
+| キャッシュヒット率              | KV Storageのキャッシュ動作   |
+| コスト計測                      | 実際のトークン使用量とコスト |
 
 **実行方法**:
+
 ```bash
 # 統合テスト（環境変数が必要）
 bun test -- --grep "integration"
 ```
 
 **テスト例**:
+
 ```typescript
 // src/ai/engine.test.ts
 describe('AIEngine Integration', () => {
   it('should evaluate batch articles correctly', async () => {
     const engine = new AIEngine(process.env.ANTHROPIC_API_KEY!);
-    const articles = [/* テスト用記事 */];
+    const articles = [
+      /* テスト用記事 */
+    ];
     const result = await engine.evaluateBatch(articles);
-    
+
     expect(result.evaluations).toHaveLength(articles.length);
     expect(result.total_tokens).toBeLessThan(10000);
   });
@@ -194,6 +212,7 @@ describe('AIEngine Integration', () => {
 ```
 
 **確認事項**:
+
 - [ ] 記事取得から投稿までの流れが正常
 - [ ] キャッシュが正しく動作
 - [ ] コストが期待値以下
@@ -207,6 +226,7 @@ describe('AIEngine Integration', () => {
 **テスト内容**:
 
 1. **Cron実行のシミュレーション**:
+
    ```bash
    # ローカルでCronエンドポイントをテスト
    curl http://localhost:8787/cron/post-articles
@@ -221,6 +241,7 @@ describe('AIEngine Integration', () => {
    - エラー時の通知が正しく送信される
 
 **確認事項**:
+
 - [ ] Cron実行が正常に動作
 - [ ] エラーが適切にハンドリングされる
 - [ ] Slack通知が正しく送信される
@@ -294,7 +315,7 @@ bun run ci
 1. **型安全性**: すべての関数に型注釈を付ける
 2. **エラーハンドリング**: すべての非同期処理でtry-catchを使用
 3. **コメント**: 複雑なロジックには説明コメントを追加
-4. **命名規則**: 
+4. **命名規則**:
    - 関数: camelCase
    - クラス: PascalCase
    - 定数: UPPER_SNAKE_CASE
@@ -355,6 +376,7 @@ npx wrangler d1 execute qiita-bot-db \
 **原因**: KV NamespaceのIDが正しく設定されていない
 
 **解決方法**:
+
 ```bash
 # KV NamespaceのIDを確認
 npx wrangler kv:namespace list
@@ -367,6 +389,7 @@ npx wrangler kv:namespace list
 **原因**: Secretsが正しく設定されていない
 
 **解決方法**:
+
 ```bash
 # 設定済みのSecretsを確認
 npx wrangler secret list
@@ -380,6 +403,7 @@ npx wrangler secret put <SECRET_NAME>
 **原因**: プロンプトが長すぎる、またはAPIキーが無効
 
 **解決方法**:
+
 - トークン数を確認（`src/utils/tokens.ts`の圧縮ロジックを確認）
 - APIキーを再設定
 - ログでエラーメッセージを確認
@@ -394,4 +418,3 @@ npx wrangler secret put <SECRET_NAME>
 - [Cloudflare Workers Documentation](https://developers.cloudflare.com/workers/)
 - [Hono Documentation](https://hono.dev/)
 - [Vitest Documentation](https://vitest.dev/)
-

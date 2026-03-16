@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+
 import { SlackClient } from './api/slack';
 import { ArticleService } from './services/articleService';
 import { MetricsService } from './services/metricsService';

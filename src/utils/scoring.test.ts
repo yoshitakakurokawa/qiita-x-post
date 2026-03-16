@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import type { QiitaArticle } from '../types/qiita';
 import { calculateMetaScore, estimateTokens, filterByMetaScore, selectAIModel } from './scoring';
 
