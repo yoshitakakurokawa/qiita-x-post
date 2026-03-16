@@ -82,21 +82,22 @@ APIs:
 
 曜日ごとに異なる戦略を適用：
 
-| 曜日 | 戦略 | 期間 | メタスコア閾値 | 再投稿許可 |
-|------|------|------|--------------|----------|
-| 月曜 | 新しめ + そこそこのスコア | 過去14日間 | 25 | 可（7日以上経過） |
-| 火曜 | 古いけど高スコア | 過去90日間 | 40 | 可（7日以上経過） |
-| 水曜 | 最新の記事優先 | 過去7日間 | 20 | 不可 |
-| 木曜 | 新しめ + そこそこのスコア | 過去14日間 | 25 | 可（7日以上経過） |
-| 金曜 | 古いけど高スコア | 過去90日間 | 40 | 可（7日以上経過） |
-| 土曜 | バランス型 | 過去28日間 | 28 | 可（7日以上経過） |
-| 日曜 | 最新の記事優先 | 過去7日間 | 20 | 不可 |
+| 曜日 | 戦略                      | 期間       | メタスコア閾値 | 再投稿許可        |
+| ---- | ------------------------- | ---------- | -------------- | ----------------- |
+| 月曜 | 新しめ + そこそこのスコア | 過去14日間 | 25             | 可（7日以上経過） |
+| 火曜 | 古いけど高スコア          | 過去90日間 | 40             | 可（7日以上経過） |
+| 水曜 | 最新の記事優先            | 過去7日間  | 20             | 不可              |
+| 木曜 | 新しめ + そこそこのスコア | 過去14日間 | 25             | 可（7日以上経過） |
+| 金曜 | 古いけど高スコア          | 過去90日間 | 40             | 可（7日以上経過） |
+| 土曜 | バランス型                | 過去28日間 | 28             | 可（7日以上経過） |
+| 日曜 | 最新の記事優先            | 過去7日間  | 20             | 不可              |
 
 #### 1-2. 夕方の投稿 (`/cron/post-articles-evening`)
 
 実行タイミング: 毎日 18:00 JST (UTC 9:00)
 
 **戦略**:
+
 - 過去3日間の記事をチェック（複数同時投稿を見落とさないため）
 - 古い順にソートして最古のものを送信
 - メタスコア閾値: 通常15、アドベントカレンダー期間中は10
@@ -178,16 +179,17 @@ AI評価前に機械的スコアで低品質記事を除外。
 
 **スコアリング基準** (`src/utils/scoring.ts`)
 
-| 項目 | 最大スコア | 計算方法 |
-|------|-----------|---------|
-| いいね数 | 10 | `min(likes * 2, 10)` |
-| ストック数 | 10 | `min(stocks * 2, 10)` |
-| 鮮度 | 10 | 新しいほど高スコア（30日で減衰） |
-| プレミアムタグ | 5 | 人気タグ存在で加点 |
-| コメント数 | 5 | `min(comments, 5)` |
-| 記事の充実度 | 5 | 本文長、コードブロック数で評価 |
+| 項目           | 最大スコア | 計算方法                         |
+| -------------- | ---------- | -------------------------------- |
+| いいね数       | 10         | `min(likes * 2, 10)`             |
+| ストック数     | 10         | `min(stocks * 2, 10)`            |
+| 鮮度           | 10         | 新しいほど高スコア（30日で減衰） |
+| プレミアムタグ | 5          | 人気タグ存在で加点               |
+| コメント数     | 5          | `min(comments, 5)`               |
+| 記事の充実度   | 5          | 本文長、コードブロック数で評価   |
 
 **フィルタリング**:
+
 - スコア < `DEFAULT_SCORE_THRESHOLD` (デフォルト: 25) → AI評価せず除外
 
 **削減効果**: 約80%の記事を事前除外（200記事 → 40記事）
@@ -201,11 +203,11 @@ AI評価前に機械的スコアで低品質記事を除外。
 ```typescript
 // 従来: N記事 × N回のAPI呼び出し
 for (const article of articles) {
-  await evaluateArticle(article);  // コスト: N回
+  await evaluateArticle(article); // コスト: N回
 }
 
 // バッチ: N記事 × 1回のAPI呼び出し
-await evaluateBatch(articles);  // コスト: 1回
+await evaluateBatch(articles); // コスト: 1回
 ```
 
 **削減効果**: API呼び出し回数を90%削減（10記事の場合）
@@ -216,12 +218,12 @@ await evaluateBatch(articles);  // コスト: 1回
 
 **圧縮技術** (`src/utils/tokens.ts`)
 
-| 手法 | 削減率 | 実装 |
-|------|--------|------|
-| コードブロック圧縮 | 50-70% | `compressCodeBlocks()` |
-| 画像URLの簡略化 | 100% | `[Image: description]` に置き換え |
-| 重複セクション削除 | 20-30% | 類似段落の検出・除外 |
-| キーセクション抽出 | 40-60% | 重要な段落のみ抽出 |
+| 手法               | 削減率 | 実装                              |
+| ------------------ | ------ | --------------------------------- |
+| コードブロック圧縮 | 50-70% | `compressCodeBlocks()`            |
+| 画像URLの簡略化    | 100%   | `[Image: description]` に置き換え |
+| 重複セクション削除 | 20-30% | 類似段落の検出・除外              |
+| キーセクション抽出 | 40-60% | 重要な段落のみ抽出                |
 
 **削減効果**: 記事あたり平均73%のトークン削減（22,500 → 6,075トークン）
 
@@ -229,11 +231,11 @@ await evaluateBatch(articles);  // コスト: 1回
 
 記事の品質スコアに応じてAIモデルを使い分け。
 
-| メタスコア | モデル | コスト倍率 | 用途 |
-|-----------|--------|-----------|------|
-| ≥35 | Sonnet 4 | 1.0x | 高品質記事の精密評価 |
-| 20-34 | Haiku | 0.2x | 中品質記事の高速評価 |
-| <20 | なし | 0x | 評価スキップ |
+| メタスコア | モデル   | コスト倍率 | 用途                 |
+| ---------- | -------- | ---------- | -------------------- |
+| ≥35        | Sonnet 4 | 1.0x       | 高品質記事の精密評価 |
+| 20-34      | Haiku    | 0.2x       | 中品質記事の高速評価 |
+| <20        | なし     | 0x         | 評価スキップ         |
 
 **削減効果**: 平均コストを60%削減
 
@@ -242,6 +244,7 @@ await evaluateBatch(articles);  // コスト: 1回
 前回実行時刻以降の記事のみを処理。
 
 **実装**:
+
 - KVに `last_post_run` を記録
 - Qiita API呼び出し時に `since` パラメータで絞り込み
 
@@ -253,10 +256,10 @@ await evaluateBatch(articles);  // コスト: 1回
 
 ### KV Namespace
 
-| Key | Type | Description |
-|-----|------|-------------|
-| `last_post_run` | string (ISO timestamp) | 最後の記事投稿処理実行時刻 |
-| `article_cache:{id}` | JSON | 記事キャッシュ（重複検出用） |
+| Key                  | Type                   | Description                  |
+| -------------------- | ---------------------- | ---------------------------- |
+| `last_post_run`      | string (ISO timestamp) | 最後の記事投稿処理実行時刻   |
+| `article_cache:{id}` | JSON                   | 記事キャッシュ（重複検出用） |
 
 ### D1 Database
 
@@ -338,11 +341,11 @@ CREATE TABLE deduplication_log (
 
 ### Vectorize Index
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Qiita記事ID |
-| `values` | float[] | 768次元埋め込みベクトル |
-| `metadata` | object | `{title, url, posted_at}` |
+| Field      | Type    | Description               |
+| ---------- | ------- | ------------------------- |
+| `id`       | string  | Qiita記事ID               |
+| `values`   | float[] | 768次元埋め込みベクトル   |
+| `metadata` | object  | `{title, url, posted_at}` |
 
 ---
 
@@ -355,6 +358,7 @@ CREATE TABLE deduplication_log (
 ヘルスチェックエンドポイント。
 
 **レスポンス**:
+
 ```json
 {
   "status": "ok",
@@ -367,6 +371,7 @@ CREATE TABLE deduplication_log (
 統計情報を取得。
 
 **レスポンス**:
+
 ```json
 {
   "total_posts": 42,
@@ -392,6 +397,7 @@ CREATE TABLE deduplication_log (
 **トリガー**: Cron (毎日 9:00 JST)
 
 **レスポンス**:
+
 ```json
 {
   "message": "Article posted successfully",
@@ -410,6 +416,7 @@ CREATE TABLE deduplication_log (
 **トリガー**: Cron (毎日 18:00 JST)
 
 **レスポンス**:
+
 ```json
 {
   "message": "Article posted successfully",
@@ -428,6 +435,7 @@ CREATE TABLE deduplication_log (
 **トリガー**: Cron (月・木 9:00 JST) - 従来の設定
 
 **レスポンス**:
+
 ```json
 {
   "message": "Article posted successfully",
@@ -445,6 +453,7 @@ CREATE TABLE deduplication_log (
 **トリガー**: Cron (毎日 2:00 JST)
 
 **レスポンス**:
+
 ```json
 {
   "success": true,
@@ -459,9 +468,11 @@ CREATE TABLE deduplication_log (
 本番環境でデータ取得をテストするためのエンドポイント。記事取得、メタスコアフィルタリング、投稿済み記事の除外までを実行しますが、AI評価やX投稿は実行されません。
 
 **クエリパラメータ**:
+
 - `since` (オプション): 取得開始日時（ISO 8601形式）。指定がない場合は過去7日間
 
 **レスポンス**:
+
 ```json
 {
   "message": "Articles fetched successfully (no posting)",
@@ -482,6 +493,7 @@ CREATE TABLE deduplication_log (
 ```
 
 **使用例**:
+
 ```bash
 # 過去7日間の記事を取得
 curl https://qiita-x-bot.your-subdomain.workers.dev/test/fetch-articles
@@ -511,11 +523,11 @@ curl "https://qiita-x-bot.your-subdomain.workers.dev/test/fetch-articles?since=2
 
 ### レスポンスタイム
 
-| エンドポイント | 平均レスポンス時間 |
-|---------------|------------------|
-| `GET /` | 10ms |
-| `GET /stats` | 50-100ms (D1クエリ) |
-| `GET /cron/post-articles` | 5-15秒 (AI評価含む) |
+| エンドポイント             | 平均レスポンス時間    |
+| -------------------------- | --------------------- |
+| `GET /`                    | 10ms                  |
+| `GET /stats`               | 50-100ms (D1クエリ)   |
+| `GET /cron/post-articles`  | 5-15秒 (AI評価含む)   |
 | `GET /cron/update-metrics` | 2-5秒 (X API呼び出し) |
 
 ### リソース使用量

@@ -1,4 +1,5 @@
 import type { Ai, VectorizeIndex } from '@cloudflare/workers-types';
+
 import type { QiitaArticle } from '../types/qiita';
 
 // Use a multilingual model for better Japanese support

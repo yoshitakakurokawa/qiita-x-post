@@ -1,6 +1,7 @@
 # `/stats` エンドポイント トラブルシューティングガイド
 
 ## 問題
+
 `/stats` エンドポイントにアクセスすると `Internal Server Error` が発生する
 
 ## 原因追及手順
@@ -27,6 +28,7 @@ npx wrangler d1 execute qiita-bot-db --remote --command "SELECT name FROM sqlite
 ```
 
 **期待される出力**:
+
 ```
 posts
 token_usage
@@ -37,12 +39,14 @@ execution_logs
 ```
 
 **テーブルが存在しない場合**:
+
 ```bash
 # 本番環境（リモート）にスキーマを適用
 npx wrangler d1 execute qiita-bot-db --remote --file=./schema.sql
 ```
 
 **重要**: 本番環境でWorkerを実行する場合は、`--remote` フラグを必ず付けてください。
+
 - `--remote` なし: ローカル開発環境のD1データベースに適用
 - `--remote` あり: 本番環境（Cloudflare）のD1データベースに適用
 
@@ -102,12 +106,14 @@ npx wrangler d1 execute qiita-bot-db --remote --command "SELECT name FROM sqlite
 **症状**: `no such table: posts` というエラー
 
 **解決方法**:
+
 ```bash
 # 本番環境（リモート）にスキーマを適用
 npx wrangler d1 execute qiita-bot-db --remote --file=./schema.sql
 ```
 
 **重要**: 本番環境でWorkerを実行する場合は、`--remote` フラグを必ず付けてください。
+
 - `--remote` なし: ローカル開発環境のD1データベースに適用
 - `--remote` あり: 本番環境（Cloudflare）のD1データベースに適用
 
@@ -116,6 +122,7 @@ npx wrangler d1 execute qiita-bot-db --remote --file=./schema.sql
 **症状**: データベースにアクセスできない
 
 **解決方法**:
+
 ```bash
 # 正しいデータベースIDを確認
 npx wrangler d1 list
@@ -129,6 +136,7 @@ cat wrangler.toml | grep database_id
 **症状**: データベースにアクセスできない
 
 **解決方法**:
+
 - Cloudflare DashboardでD1データベースの設定を確認
 - Wranglerの認証を再実行: `npx wrangler login`
 
@@ -168,4 +176,3 @@ curl https://qiita-x-bot.kurokawa-y.workers.dev/stats
 ```
 
 **注意**: 本番環境のデータベースを確認する場合は、`--remote` フラグを必ず付けてください。
-

@@ -8,9 +8,9 @@ compatibility_date = "2025-01-07"
 # 毎日 2:00 にメトリクス更新
 [triggers]
 crons = [
-  "0 0 * * *",   # 朝の記事投稿: 毎日 9:00 JST (UTC 0:00)
-  "0 9 * * *",   # 夕方の記事投稿: 毎日 18:00 JST (UTC 9:00)
-  "0 17 * * *"   # メトリクス更新: 毎日 2:00 JST (UTC 17:00前日)
+  "0 0 * * *", # 朝の記事投稿: 毎日 9:00 JST (UTC 0:00)
+  "0 9 * * *", # 夕方の記事投稿: 毎日 18:00 JST (UTC 9:00)
+  "0 17 * * *", # メトリクス更新: 毎日 2:00 JST (UTC 17:00前日)
 ]
 
 # Workers AI binding
@@ -20,13 +20,13 @@ binding = "AI"
 # KV namespace for caching
 [[kv_namespaces]]
 binding = "KV"
-id = "f9cbb9a9f22a461c8ff1bc096ad0d2ab"  # wrangler kv:namespace create KV で作成
+id = "f9cbb9a9f22a461c8ff1bc096ad0d2ab" # wrangler kv:namespace create KV で作成
 
 # D1 database for metrics
 [[d1_databases]]
 binding = "DB"
 database_name = "qiita-bot-db"
-database_id = "caafc37f-e7c6-4822-aa40-007f7fd900ce"  # wrangler d1 create qiita-bot-db で作成
+database_id = "caafc37f-e7c6-4822-aa40-007f7fd900ce" # wrangler d1 create qiita-bot-db で作成
 
 # Vectorize for article embeddings
 [[vectorize]]
@@ -35,12 +35,12 @@ index_name = "article-embeddings"
 
 # Environment variables (non-secret)
 [vars]
-ORG_MEMBERS = "c_nit,wakuto_kurokawa,wakuto-KK,wakuto-o-ga,wakuto_m-n,voo,hato_code,k3black,wakuto-ariga-owl,wakuto_hirayama,wakuto_takagi"  # 組織メンバーのQiita ID（カンマ区切り）
-DEFAULT_SCORE_THRESHOLD = "12"  # メタスコアの閾値（デフォルト）
-RECENT_POST_COOLDOWN_DAYS = "7"  # 連続送信防止期間（日）
-SIMILAR_POST_COOLDOWN_DAYS = "3"  # 類似記事の連続送信防止期間（日）
-ADVENT_CALENDAR_THRESHOLD = "5"  # アドベントカレンダー期間のメタスコア閾値
-EVENING_POST_THRESHOLD = "8"  # 夕方投稿のメタスコア閾値
+ORG_MEMBERS = "c_nit,wakuto_kurokawa,wakuto-KK,wakuto-o-ga,wakuto_m-n,voo,hato_code,k3black,wakuto-ariga-owl,wakuto_hirayama,wakuto_takagi" # 組織メンバーのQiita ID（カンマ区切り）
+DEFAULT_SCORE_THRESHOLD = "12" # メタスコアの閾値（デフォルト）
+RECENT_POST_COOLDOWN_DAYS = "7" # 連続送信防止期間（日）
+SIMILAR_POST_COOLDOWN_DAYS = "3" # 類似記事の連続送信防止期間（日）
+ADVENT_CALENDAR_THRESHOLD = "5" # アドベントカレンダー期間のメタスコア閾値
+EVENING_POST_THRESHOLD = "8" # 夕方投稿のメタスコア閾値
 
 [observability]
 enabled = false
