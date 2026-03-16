@@ -15,7 +15,7 @@ vi.mock('@anthropic-ai/sdk', () => {
   };
 });
 
-describe('AIEngine', () => {
+describe('AIEngine', { tags: ['integration', 'ai'] }, () => {
   let engine: AIEngine;
   const mockArticle: QiitaArticle & { metaScore: number } = {
     id: '1',

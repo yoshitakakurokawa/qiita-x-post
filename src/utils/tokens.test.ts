@@ -7,7 +7,7 @@ import {
   optimizeForSummarization,
 } from './tokens';
 
-describe('tokens', () => {
+describe('tokens', { tags: ['unit', 'tokens'] }, () => {
   describe('compressCodeBlocks', () => {
     it('should not compress short code blocks', () => {
       const code = `\`\`\`js\n${'line\n'.repeat(10)}\`\`\``;
