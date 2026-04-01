@@ -31,13 +31,10 @@ export class XAPIClient {
   private async generateOAuthSignature(
     method: string,
     url: string,
+    timestamp: string,
+    nonce: string,
     params: Record<string, string>
   ): Promise<string> {
-    const timestamp = Math.floor(Date.now() / 1000).toString();
-    const nonce = Array.from(crypto.getRandomValues(new Uint8Array(32)))
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('');
-
     const oauthParams: Record<string, string> = {
       oauth_consumer_key: this.apiKey,
       oauth_token: this.accessToken,
@@ -87,7 +84,7 @@ export class XAPIClient {
       .map((b) => b.toString(16).padStart(2, '0'))
       .join('');
 
-    const signature = await this.generateOAuthSignature(method, url, params);
+    const signature = await this.generateOAuthSignature(method, url, timestamp, nonce, params);
 
     const oauthParams = {
       oauth_consumer_key: this.apiKey,
