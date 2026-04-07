@@ -260,6 +260,30 @@ app.get('/stats', async (c) => {
 });
 
 /**
+ * テスト用: X API疎通確認（投稿しない）
+ * OAuth認証が正常に機能しているか確認する
+ */
+app.get('/test/x-connectivity', async (c) => {
+  const { XAPIClient } = await import('./api/x');
+  const client = new XAPIClient(
+    c.env.TWITTER_API_KEY,
+    c.env.TWITTER_API_SECRET,
+    c.env.TWITTER_ACCESS_TOKEN,
+    c.env.TWITTER_ACCESS_SECRET
+  );
+
+  try {
+    const user = await client.verifyCredentials();
+    return c.json({ ok: true, user });
+  } catch (error) {
+    return c.json(
+      { ok: false, error: error instanceof Error ? error.message : String(error) },
+      500
+    );
+  }
+});
+
+/**
  * テスト用: 記事取得のみ（投稿しない）
  * 本番環境でデータ取得をテストするためのエンドポイント
  */

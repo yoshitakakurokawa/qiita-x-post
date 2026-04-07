@@ -130,12 +130,44 @@ export class XAPIClient {
   }
 
   /**
+   * 認証情報の疎通確認（GET /2/users/me）
+   * 投稿なしでOAuth認証が正常か確認する
+   */
+  async verifyCredentials(): Promise<{ id: string; name: string; username: string }> {
+    const baseUrl = 'https://api.twitter.com/2/users/me';
+    const queryParams = { 'user.fields': 'name,username' };
+    const authHeader = await this.generateOAuthHeader('GET', baseUrl, queryParams);
+
+    const url = `${baseUrl}?user.fields=name%2Cusername`;
+    const response = await fetch(url, {
+      headers: { Authorization: authHeader },
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`X API error: ${response.status} ${response.statusText} - ${errorBody}`);
+    }
+
+    const data = (await response.json()) as { data: { id: string; name: string; username: string } };
+    return data.data;
+  }
+
+  /**
    * ツイートのメトリクスを取得
    */
   async getTweetMetrics(tweetIds: string[]): Promise<TweetMetrics[]> {
-    const url = `https://api.twitter.com/2/tweets?ids=${tweetIds.join(',')}&tweet.fields=public_metrics`;
+    const baseUrl = 'https://api.twitter.com/2/tweets';
+    // OAuth 1.0a: クエリパラメータは署名のparams引数で渡す（URLには含めない）
+    const queryParams: Record<string, string> = {
+      ids: tweetIds.join(','),
+      'tweet.fields': 'public_metrics',
+    };
+    const authHeader = await this.generateOAuthHeader('GET', baseUrl, queryParams);
 
-    const authHeader = await this.generateOAuthHeader('GET', url);
+    const queryString = Object.entries(queryParams)
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+      .join('&');
+    const url = `${baseUrl}?${queryString}`;
 
     const response = await fetch(url, {
       headers: {
