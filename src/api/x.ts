@@ -148,7 +148,9 @@ export class XAPIClient {
       throw new Error(`X API error: ${response.status} ${response.statusText} - ${errorBody}`);
     }
 
-    const data = (await response.json()) as { data: { id: string; name: string; username: string } };
+    const data = (await response.json()) as {
+      data: { id: string; name: string; username: string };
+    };
     return data.data;
   }
 
